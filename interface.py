@@ -33,7 +33,7 @@ class VocDialog(QDialog) :
         self.fileDialog.setFileMode(QFileDialog.AnyFile)
         self.fileDialog.setViewMode(QFileDialog.Detail)
 
-        self.loadButton = QPushButton( "Open\New :", self)
+        self.loadButton = QPushButton( r"Open\New :", self)
         self.loadButton.setAutoDefault(False)
 
         self.textList = QListWidget(self)
@@ -112,9 +112,9 @@ class VocDialog(QDialog) :
 
 if __name__ == '__main__' :
 
-    import sys
-    app = QApplication(sys.argv)
+    from sys import argv, exit
+    app = QApplication(argv)
     dialog = VocDialog()
     dialog.show()
-    sys.exit( app.exec_() )
+    exit( app.exec_() )
 
