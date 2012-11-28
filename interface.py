@@ -16,7 +16,7 @@ from re import compile as reCompile
 #from os.path import basename
 
 
-__all__ = ['VocDialog']
+__all__ = ['VocDialog', 'App']
 
 
 class VocDialog(QDialog) :
