@@ -16,8 +16,8 @@ from interface import *
 
 def getLogger() :
     # Create and set the logger.
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
+    logger = logging.getLogger('VocVoc')
+    logger.setLevel(logging.INFO)
     # Create a TimedRotatingFileHandler.
     fileHandler = TimedRotatingFileHandler('vocvoc.log', when='d')
     # Only log things which could be wrong.
@@ -32,9 +32,12 @@ def getLogger() :
     # Add handlers to the logger.
     for handler in [fileHandler, consoleHandler] :
         logger.addHandler(handler)
+    logger.info('Created Logger.')
 
 def VocVoc() :
     getLogger()
+    logger = logging.getLogger('VocVoc')
+    logger.info('Starting VocVoc.')
     App()
 
 
