@@ -12,8 +12,11 @@ from PyQt4.QtCore import QFile, Qt
 # re
 from re import compile as reCompile
 
+# logging
+import logging
+
 # os
-#from os.path import basename
+from os.path import basename
 
 
 __all__ = ['VocDialog', 'App']
@@ -27,11 +30,16 @@ class VocDialog(QDialog) :
 
     def __init__(self, parent=None) :
         super(VocDialog, self).__init__(parent)
+        self.logger = logging.getLogger('VocVoc.VocDialog')
+        self.info = self.logger.info
+        self.info('Starting VocDialog.')
         self.setupUi()
         self.connect()
+        self.info('VocDialog started.')
 
     def setupUi(self) :
         "Setup the UI."
+        self.info('Seting up the UI.')
         self.fileDialog = QFileDialog()
         self.fileDialog.setFileMode(QFileDialog.AnyFile)
         self.fileDialog.setViewMode(QFileDialog.Detail)
@@ -54,45 +62,60 @@ class VocDialog(QDialog) :
         self.setLayout(VBox)
         #self.resize()
         self.setWindowTitle("VocVoc -- Your Vocabulary Helper")
+        self.info('UI is set up now.')
 
     def connect(self) :
         "Connect signals and slots in the UI."
+        self.info('Connecting signals and slots.')
         inputLine = self.inputLine
         loadButton = self.loadButton
         loadButton.clicked.connect(self.loadFile)
         inputLine.returnPressed.connect(self.addText)
+        self.info('Signals and slots connected.')
 
     def loadFile(self) :
         "Open the file dialog to select the file and try to start."
         # Open the file dialog.
+        logger = logging.getLogger('VocVoc.VocDialog.loadFile')
+        info = logger.info
+        info('Preparing to load file.')
         textList = self.textList
         if ( self.fileDialog.exec() ) :
-            fileName = self.fileDialog.selectedFiles()[0]
+            info('Dialog executed sucessfully.')
+            filePath = self.fileDialog.selectedFiles()[0]
+            fileName = basename(filePath)
             # Create or read file.
-            #if QFile.exists(fileName) : # File exists.
+            #if QFile.exists(filePath) : # File exists.
             try :
-                textFile = open(fileName, 'r+')
+                textFile = open(filePath, 'r+')
+                info('File exists, openning up.')
                 writenText = textFile.read()
                 writenText = writenText.splitlines()
                 textList.clear()
                 textList.addItems( writenText )
                 textList.setCurrentRow( len(writenText)-1 )
-            except IOError as error : # File does not exists. We create one.
+                info('Added items to list and set current row to the last row.')
+            except IOError as error : # File does not exist. We create one.
+                info('File does not exist. Trying to find the dight in the name.')
                 listNumber = self.findDight.search(fileName)
                 if listNumber is None : # No number found in the text.
+                    logger.warn('Dight not found in the filename. Try again.')
                     msg = 'No number found in the file name.\nPlease try again.'
                     QMessageBox.warning(self, 'List number NOT found.',
                             msg,
                             QMessageBox.Ok)
                     return msg
                 else : # No existing file but found the number in the file name.
-                    textFile = open(fileName, 'x')
+                    info('Dight Found. Creating file and adding first line.')
+                    textFile = open(filePath, 'x')
                     firstLine = '# list ' + str( listNumber.group() )
                     textFile.write( firstLine +'\n' )
                     textList.clear()
                     textList.addItem(firstLine)
 
+            info('Set inputline to write-enabled.')
             self.inputLine.setReadOnly(False)
+            info('Pass textFile to the dialog')
             self.textFile = textFile
 
 
@@ -100,6 +123,7 @@ class VocDialog(QDialog) :
 
     def addText(self) :
         "Get the text from the input line and add it to the file and the list."
+        self.info('Adding text to textList and the file')
         textList = self.textList
         addItem = textList.addItem
         write = self.textFile.write
