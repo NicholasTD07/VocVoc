@@ -108,13 +108,14 @@ class VocDialog(QDialog) :
         write( text + '\n' )
 
 
-
-
-if __name__ == '__main__' :
-
+def main() :
     from sys import argv, exit
     app = QApplication(argv)
     dialog = VocDialog()
     dialog.show()
     exit( app.exec_() )
+
+
+if __name__ == '__main__' :
+    main()
 
