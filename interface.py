@@ -28,7 +28,7 @@ class VocDialog(QDialog) :
         self.connect()
 
     def setupUi(self) :
-
+        "Setup the UI."
         self.fileDialog = QFileDialog()
         self.fileDialog.setFileMode(QFileDialog.AnyFile)
         self.fileDialog.setViewMode(QFileDialog.Detail)
@@ -53,32 +53,36 @@ class VocDialog(QDialog) :
         self.setWindowTitle("VocVoc -- Your Vocabulary Helper")
 
     def connect(self) :
+        "Connect signals and slots in the UI."
         inputLine = self.inputLine
         loadButton = self.loadButton
         loadButton.clicked.connect(self.loadFile)
         inputLine.returnPressed.connect(self.addText)
 
     def loadFile(self) :
+        "Open the file dialog to select the file and try to start."
         # Open the file dialog.
         textList = self.textList
         if ( self.fileDialog.exec() ) :
             fileName = self.fileDialog.selectedFiles()[0]
             # Create or read file.
-            if QFile.exists(fileName) : # File exists.
-                print(fileName)
+            #if QFile.exists(fileName) : # File exists.
+            try :
                 textFile = open(fileName, 'r+')
                 writenText = textFile.read()
                 writenText = writenText.splitlines()
                 textList.clear()
                 textList.addItems( writenText )
                 textList.setCurrentRow( len(writenText)-1 )
-            else : # File does not exists. We create one.
+            except IOError as error : # File does not exists. We create one.
                 listNumber = self.findDight.search(fileName)
                 if listNumber is None : # No number found in the text.
+                    msg = 'No number found in the file name.\nPlease try again.'
                     QMessageBox.warning(self, 'List number NOT found.',
-                            'No number found in the file name.\nPlease try again.',
+                            msg,
                             QMessageBox.Ok)
-                else : # No existing file and found the number in the file name.
+                    return msg
+                else : # No existing file but found the number in the file name.
                     textFile = open(fileName, 'x')
                     firstLine = '# list ' + str( listNumber.group() )
                     textFile.write( firstLine +'\n' )
@@ -92,10 +96,11 @@ class VocDialog(QDialog) :
 
 
     def addText(self) :
+        "Get the text from the input line and add it to the file and the list."
         textList = self.textList
+        addItem = textList.addItem
         write = self.textFile.write
         text = self.inputLine.text()
-        addItem = textList.addItem
         setCurrentRow = textList.setCurrentRow
 
         addItem(text)
