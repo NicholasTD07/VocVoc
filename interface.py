@@ -87,9 +87,9 @@ class VocDialog(QDialog) :
             # Create or read file.
             #if QFile.exists(filePath) : # File exists.
             try :
-                textFile = open(filePath, 'r+')
-                info('File exists, openning up.')
-                writenText = textFile.read()
+                with open(filePath, 'r+') as textFile :
+                    info('File exists, openning up.')
+                    writenText = textFile.read()
                 writenText = writenText.splitlines()
                 textList.clear()
                 textList.addItems( writenText )
@@ -107,32 +107,35 @@ class VocDialog(QDialog) :
                     return msg
                 else : # No existing file but found the number in the file name.
                     info('Dight Found. Creating file and adding first line.')
-                    textFile = open(filePath, 'x')
-                    firstLine = '# list ' + str( listNumber.group() )
-                    textFile.write( firstLine +'\n' )
+                    with open(filePath, 'x') as textFile :
+                        firstLine = '# list ' + str( listNumber.group() )
+                        textFile.write( firstLine +'\n' )
                     textList.clear()
                     textList.addItem(firstLine)
 
             info('Set inputline to write-enabled.')
             self.inputLine.setReadOnly(False)
             info('Pass textFile to the dialog')
-            self.textFile = textFile
+            self.filePath = filePath
 
-
-
+    def flush(self, text) :
+        with open(self.filePath, 'a') as textFile :
+            text = "".join( [text, '\n'] )
+            textFile.write(text)
 
     def addText(self) :
         "Get the text from the input line and add it to the file and the list."
         self.info('Adding text to textList and the file')
         textList = self.textList
         addItem = textList.addItem
-        write = self.textFile.write
+        #write = self.textFile.write
         text = self.inputLine.text()
         setCurrentRow = textList.setCurrentRow
 
         addItem(text)
         setCurrentRow( textList.count() - 1 )
-        write( text + '\n' )
+        #write( text + '\n' )
+        self.flush(text)
 
 
 def App() :
