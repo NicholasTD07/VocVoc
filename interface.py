@@ -111,7 +111,7 @@ class VocDialog(QDialog) :
         write( text + '\n' )
 
 
-def main() :
+def App() :
     from sys import argv, exit
     app = QApplication(argv)
     dialog = VocDialog()
