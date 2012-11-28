@@ -16,6 +16,9 @@ from re import compile as reCompile
 #from os.path import basename
 
 
+__all__ = ['VocDialog']
+
+
 class VocDialog(QDialog) :
 
     """This is the dialog which presents the interface and organise everything."""
