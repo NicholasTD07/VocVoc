@@ -1,0 +1,7 @@
+FAQ
+1. There is no sound with the software.
+
+  Please check do you have mp3 support with the Qt Phonon backends.
+  1. On linux, I suggest install all the gstreamer plugins.
+    On Arch Linux, Use this : sudo pacman -S gstreamer0.10-plugins
+
