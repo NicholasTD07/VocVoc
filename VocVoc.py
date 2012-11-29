@@ -19,7 +19,7 @@ def getLogger() :
     logger = logging.getLogger('VocVoc')
     logger.setLevel(logging.INFO)
     # Create a TimedRotatingFileHandler.
-    fileHandler = TimedRotatingFileHandler('vocvoc.log', when='d')
+    fileHandler = TimedRotatingFileHandler('VocVoc.log', when='w')
     # Only log things which could be wrong.
     fileHandler.setLevel(logging.WARNING)
     # Create a StreamHandler to output to the console.
