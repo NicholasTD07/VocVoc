@@ -8,6 +8,7 @@ from PyQt4.QtGui import QDialog, QPushButton, QListWidget, QLineEdit,\
         QStatusBar, QLabel, QVBoxLayout, QFileDialog, QListWidgetItem,\
         QMessageBox, QApplication
 from PyQt4.QtCore import QFile, Qt
+from PyQt4.phonon import Phonon
 
 # re
 from re import compile as reCompile
@@ -17,6 +18,9 @@ import logging
 
 # os
 from os.path import basename
+
+# misc
+from misc import *
 
 
 __all__ = ['VocDialog', 'App']
@@ -133,17 +137,18 @@ class VocDialog(QDialog) :
 
         addItem(text)
         setCurrentRow( textList.count() - 1 )
-        self.flush(text)
+        flush(self.filePath, text)
 
 
 def App() :
     from sys import argv, exit
     app = QApplication(argv)
+    app.setApplicationName("TheDevil's VocVoc")
     dialog = VocDialog()
     dialog.show()
     exit( app.exec_() )
 
 
 if __name__ == '__main__' :
-    main()
+    App()
 
