@@ -73,6 +73,23 @@ class VocDialog(QDialog) :
         inputLine.returnPressed.connect(self.addText)
         self.info('Signals and slots connected.')
 
+    def flush(self, text) :
+        with open(self.filePath, 'a') as textFile :
+            text = "".join( [text, '\n'] )
+            textFile.write(text)
+
+    def addText(self) :
+        "Get the text from the input line and add it to the file and the list."
+        self.info('Adding text to textList and the file')
+        textList = self.textList
+        addItem = textList.addItem
+        text = self.inputLine.text()
+        setCurrentRow = textList.setCurrentRow
+
+        addItem(text)
+        setCurrentRow( textList.count() - 1 )
+        self.flush(text)
+
     def loadFile(self) :
         "Open the file dialog to select the file and try to start."
         # Open the file dialog.
@@ -117,23 +134,6 @@ class VocDialog(QDialog) :
             self.inputLine.setReadOnly(False)
             info('Pass textFile to the dialog')
             self.filePath = filePath
-
-    def flush(self, text) :
-        with open(self.filePath, 'a') as textFile :
-            text = "".join( [text, '\n'] )
-            textFile.write(text)
-
-    def addText(self) :
-        "Get the text from the input line and add it to the file and the list."
-        self.info('Adding text to textList and the file')
-        textList = self.textList
-        addItem = textList.addItem
-        text = self.inputLine.text()
-        setCurrentRow = textList.setCurrentRow
-
-        addItem(text)
-        setCurrentRow( textList.count() - 1 )
-        self.flush(text)
 
 
 def App() :
