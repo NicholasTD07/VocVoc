@@ -8,6 +8,7 @@ from PyQt4.QtGui import QDialog, QPushButton, QListWidget, QLineEdit,\
         QStatusBar, QLabel, QVBoxLayout, QFileDialog, QListWidgetItem,\
         QMessageBox, QApplication
 from PyQt4.QtCore import QFile, Qt
+from PyQt4.phonon import Phonon
 
 # re
 from re import compile as reCompile
@@ -18,6 +19,9 @@ import logging
 # os
 from os.path import basename
 
+# url
+#from urllib.request import urlopen
+
 
 __all__ = ['VocDialog', 'App']
 
@@ -26,13 +30,17 @@ class VocDialog(QDialog) :
 
     """This is the dialog which presents the interface and organise everything."""
 
+    MAGICWORD = 'CHANGEME'
+    baseURL = 'http://www.gstatic.com/dictionary/static/sounds/de/0/CHANGEME.mp3'
     findDight = reCompile(r'\d+')
 
     def __init__(self, parent=None) :
         super(VocDialog, self).__init__(parent)
         self.logger = logging.getLogger('VocVoc.VocDialog')
         self.info = self.logger.info
+        self.warn = self.logger.warn
         self.info('Starting VocDialog.')
+        self.mediaObeject = Phonon.createPlayer(Phonon.MusicCategory, Phonon.MediaSource(''))
         self.setupUi()
         self.connect()
         self.info('VocDialog started.')
@@ -69,25 +77,50 @@ class VocDialog(QDialog) :
         self.info('Connecting signals and slots.')
         inputLine = self.inputLine
         loadButton = self.loadButton
+        mediaObeject = self.mediaObeject
         loadButton.clicked.connect(self.loadFile)
         inputLine.returnPressed.connect(self.addText)
+        if self.logger.isEnabledFor(logging.DEBUG) :
+            mediaObeject.stateChanged.connect( self.errorState )
         self.info('Signals and slots connected.')
+
+    def errorState(self, state) :
+        errorStates = {
+                        0: 'Loading',
+                        1: 'Stopped',
+                        2: 'Playing',
+                        3: 'Buffering',
+                        4: 'Paused',
+                        5: 'Error'
+                        }
+        msg ='{} state in Phonon!'.format( errorStates[state]) 
+        self.info(self.mediaObeject.errorType())
+        if state == 5 :
+            self.warn(msg)
+        else :
+            self.info(msg)
 
     def flush(self, text) :
         with open(self.filePath, 'a') as textFile :
             text = "".join( [text, '\n'] )
             textFile.write(text)
 
+    def pronounce(self, word) :
+        url = self.baseURL.replace(self.MAGICWORD, word)
+        self.mediaObeject.setCurrentSource(Phonon.MediaSource(url))
+        self.mediaObeject.play()
+
     def addText(self) :
         "Get the text from the input line and add it to the file and the list."
         self.info('Adding text to textList and the file')
         textList = self.textList
         addItem = textList.addItem
-        text = self.inputLine.text()
+        text = self.inputLine.text().strip().lower()
         setCurrentRow = textList.setCurrentRow
 
         addItem(text)
         setCurrentRow( textList.count() - 1 )
+        self.pronounce(text)
         self.flush(text)
 
     def loadFile(self) :
@@ -139,6 +172,7 @@ class VocDialog(QDialog) :
 def App() :
     from sys import argv, exit
     app = QApplication(argv)
+    app.setApplicationName(r"TheDevil's VocVoc")
     dialog = VocDialog()
     dialog.show()
     exit( app.exec_() )
