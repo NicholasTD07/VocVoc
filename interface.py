@@ -22,6 +22,9 @@ from os.path import basename
 # url
 #from urllib.request import urlopen
 
+# misc
+from misc import *
+
 
 __all__ = ['VocDialog', 'App']
 
@@ -100,11 +103,6 @@ class VocDialog(QDialog) :
         else :
             self.info(msg)
 
-    def flush(self, text) :
-        with open(self.filePath, 'a') as textFile :
-            text = "".join( [text, '\n'] )
-            textFile.write(text)
-
     def pronounce(self, word) :
         url = self.baseURL.replace(self.MAGICWORD, word)
         self.mediaObeject.setCurrentSource(Phonon.MediaSource(url))
@@ -121,7 +119,7 @@ class VocDialog(QDialog) :
         addItem(text)
         setCurrentRow( textList.count() - 1 )
         self.pronounce(text)
-        self.flush(text)
+        flush(self.filePath, text)
 
     def loadFile(self) :
         "Open the file dialog to select the file and try to start."
@@ -179,5 +177,5 @@ def App() :
 
 
 if __name__ == '__main__' :
-    main()
+    App()
 
