@@ -61,7 +61,6 @@ class VocDialog(QDialog) :
         self.textList = QListWidget(self)
 
         self.inputLine = QLineEdit(self)
-        self.inputLine.setReadOnly(True)
 
         self.statusBar = QStatusBar(self)
         self.statusBar.addWidget( QLabel('Hello World! I love YOU!!!') )
@@ -123,9 +122,12 @@ class VocDialog(QDialog) :
         addItem(text)
         inputLine.clear()
         setCurrentRow( textList.count() - 1 )
-        flush(self.filePath, text)
         if not text.startswith('#') : # Input with '#' means it is a comment. No need to pronounce it.
             self.pronounce(text)
+        try : # With the try statement, it can be used as a pronounciation helper.
+            flush(self.filePath, text)
+        except Exception :
+            self.info('Using this freely without writing to a file as a pronounciation helper.')
 
     def loadFile(self) :
         "Open the file dialog to select the file and try to start."
