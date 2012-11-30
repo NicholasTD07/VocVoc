@@ -40,9 +40,12 @@ def getLogger(DEBUG=False) :
 def VocVoc() :
     descriptionMsg = """
             Put the input to a file and the list in the dialog.
-            If the input is a word whose sound file can be found, then the file will be played.
+            If the input is a word whose sound file can be found, 
+            then the file will be played.
             """
-    verboseMsg = 'Turn on the DEBUG level for logging to see what is going on with Phonon.'
+    verboseMsg = """
+            Turn on the DEBUG level for logging to see what is going on with Phonon.
+            """
     argParser = ArgumentParser(description=descriptionMsg)
     argParser.add_argument(
                             '-v',
