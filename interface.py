@@ -34,8 +34,8 @@ class VocDialog(QDialog) :
     """This is the dialog which presents the interface and organise everything."""
 
     MAGICWORD = 'CHANGEME'
-    baseURL = 'http://www.gstatic.com/dictionary/static/sounds/de/0/CHANGEME.mp3'
     findDight = reCompile(r'\d+')
+    baseURL = 'http://www.gstatic.com/dictionary/static/sounds/de/0/CHANGEME.mp3'
 
     def __init__(self, parent=None) :
         super(VocDialog, self).__init__(parent)
