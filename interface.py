@@ -114,12 +114,14 @@ class VocDialog(QDialog) :
         textList = self.textList
         addItem = textList.addItem
         text = self.inputLine.text().strip().lower()
+        self.info( 'Input is {}.'.format(text) )
         setCurrentRow = textList.setCurrentRow
 
         addItem(text)
         setCurrentRow( textList.count() - 1 )
-        self.pronounce(text)
         flush(self.filePath, text)
+        if not text.startswith('#') : # Input with '#' means it is a comment. No need to pronounce it.
+            self.pronounce(text)
 
     def loadFile(self) :
         "Open the file dialog to select the file and try to start."
