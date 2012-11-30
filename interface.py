@@ -114,12 +114,14 @@ class VocDialog(QDialog) :
         "Get the text from the input line and add it to the file and the list."
         self.info('Adding text to textList and the file')
         textList = self.textList
+        inputLine = self.inputLine
         addItem = textList.addItem
-        text = self.inputLine.text().strip().lower()
+        text = inputLine.text().strip().lower()
         self.info( 'Input is {}.'.format(text) )
         setCurrentRow = textList.setCurrentRow
 
         addItem(text)
+        inputLine.clear()
         setCurrentRow( textList.count() - 1 )
         flush(self.filePath, text)
         if not text.startswith('#') : # Input with '#' means it is a comment. No need to pronounce it.
@@ -165,7 +167,7 @@ class VocDialog(QDialog) :
                     textList.clear()
                     textList.addItem(firstLine) # Otherwise there would be a new line in the list.
 
-            info('Set inputline to write-enabled.')
+            info('Set inputLine to write-enabled.')
             self.inputLine.setReadOnly(False)
             info('Pass textFile to the dialog')
             self.filePath = filePath
