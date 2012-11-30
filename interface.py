@@ -14,7 +14,8 @@ from PyQt4.phonon import Phonon
 from re import compile as reCompile
 
 # logging
-import logging
+#import logging
+from logging import DEBUG, getLogger
 
 # os
 from os.path import basename
@@ -39,7 +40,7 @@ class VocDialog(QDialog) :
 
     def __init__(self, parent=None) :
         super(VocDialog, self).__init__(parent)
-        self.logger = logging.getLogger('VocVoc.VocDialog')
+        self.logger = getLogger('VocVoc.VocDialog')
         self.info = self.logger.info
         self.warn = self.logger.warn
         self.info('Starting VocDialog.')
@@ -82,7 +83,7 @@ class VocDialog(QDialog) :
         mediaObeject = self.mediaObeject
         loadButton.clicked.connect(self.loadFile)
         inputLine.returnPressed.connect(self.addText)
-        if self.logger.isEnabledFor(logging.DEBUG) :
+        if self.logger.isEnabledFor(DEBUG) :
             mediaObeject.stateChanged.connect( self.errorState )
         self.info('Signals and slots connected.')
 
@@ -132,7 +133,7 @@ class VocDialog(QDialog) :
     def loadFile(self) :
         "Open the file dialog to select the file and try to start."
         # Open the file dialog.
-        logger = logging.getLogger('VocVoc.VocDialog.loadFile')
+        logger = getLogger('VocVoc.VocDialog.loadFile')
         info = logger.info
         info('Preparing to load file.')
         textList = self.textList
