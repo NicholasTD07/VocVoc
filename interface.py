@@ -104,9 +104,11 @@ class VocDialog(QDialog) :
             self.info(msg)
 
     def pronounce(self, word) :
+        self.info('Preparing the url to pronounce.')
         url = self.baseURL.replace(self.MAGICWORD, word)
         self.mediaObeject.setCurrentSource(Phonon.MediaSource(url))
         self.mediaObeject.play()
+        self.info('Pronounciation ended.')
 
     def addText(self) :
         "Get the text from the input line and add it to the file and the list."
