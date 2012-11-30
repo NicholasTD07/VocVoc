@@ -3,7 +3,7 @@
 This is the spell checker of the VocVoc.
 
 The original code is written by Peter Norvig.
-He has an article about the code itself and the principles behind and details of it explained at http://norvig.com/spell-correct.html .
+He has an article about the code itself and the principles behind and details of it explained at http://norvig.com/spell-correct.html.
 """
 
 # collections
