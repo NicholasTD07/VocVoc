@@ -37,8 +37,10 @@ class Config :
     def getConfig(self) :
         self.info('Getting configs into Config.')
         config = self.config
-        self.corpusDir = config['Path']['corpusDir']
         self.pickleDir = config['Path']['pickleDir']
+        self.pickleDirName = config['Name']['pickleDirName']
+        self.corpusDir = config['Path']['corpusDir']
+        self.corpusDirName = config['Name']['corpusDirName']
         self.info('Config got.')
 
     def setConfig(self, section, option, value) :
@@ -48,14 +50,16 @@ class Config :
             self.config[section][option] = value
             with open(__config__, 'w') as configFile :
                 self.config.write(configFile)
-        except TypeError as error :
-            self.warn(error)
+        except Exception as error :
+            self.warn(repr(error))
             self.warn('Option NOT set.')
             return
         self.info('Option set sucessfully.')
 
 
 if __name__ == '__main__':
-
+    from VocVoc import getLogger as myLogger
+    myLogger()
     config = Config()
-    #config.setConfig('Path', 'corpusDir', '')
+    #config.setConfig('Name', 'corpusDirName', 'corpuses')
+    #config.setConfig('Name', 'pickleDirName', 'pickles')
