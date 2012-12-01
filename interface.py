@@ -22,6 +22,9 @@ from os.path import basename
 # url
 #from urllib.request import urlopen
 
+# SpellChecker
+from spellchecker import SpellChecker
+
 # misc
 from misc import *
 
@@ -43,6 +46,8 @@ class VocDialog(QDialog) :
         self.info = self.logger.info
         self.warn = self.logger.warn
         self.info('Starting VocDialog.')
+        self.spellChecker = SpellChecker()
+        self.correct = self.spellChecker.correct
         self.mediaObeject = Phonon.createPlayer(Phonon.MusicCategory, Phonon.MediaSource(''))
         self.setupUi()
         self.connect()
@@ -115,10 +120,17 @@ class VocDialog(QDialog) :
         textList = self.textList
         inputLine = self.inputLine
         addItem = textList.addItem
+        addLable = lambda x : self.statusBar.addWidget( QLabel(x) )
         text = inputLine.text().strip().lower()
         self.info( 'Input is {}.'.format(text) )
         setCurrentRow = textList.setCurrentRow
 
+        candidates = self.correct(text)
+        #if len(candidates) < 1 or candidates[0] != text :
+        if candidates is None :
+            addLable('Are you sure?')
+        elif candidates[0] != text :
+            addLable('Do you mean {} ?'.format(' ,'.join(candidates)))
         addItem(text)
         inputLine.clear()
         setCurrentRow( textList.count() - 1 )
@@ -185,5 +197,8 @@ def App() :
 
 
 if __name__ == '__main__' :
-    App()
-
+    # this is why I have VocVoc.py
+    #from VocVoc import getLogger as myLogger
+    #myLogger()
+    #App()
+    pass
