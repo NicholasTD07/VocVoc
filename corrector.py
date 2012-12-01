@@ -21,7 +21,7 @@ from logging import getLogger
 from time import time
 
 # os
-from os.path import join as pJoin
+from os.path import basename, join as pJoin
 
 # glob
 from glob import glob
@@ -54,7 +54,7 @@ class SpellChecker:
         self.info('Initializing SpellChecker.')
         self.wordModel = WordModel()
         self.loadConfig()
-        #self.wordModel.update(self.trainModel(wordFile))
+        self.loadModels()
         self.info('SpellChecker Initialized.')
 
     def loadConfig(self) :
@@ -136,7 +136,16 @@ class SpellChecker:
             self.warn(msg)
 
     def loadModels(self) :
-        pass
+        self.info('Starting to load models in {}.'.format(self.pickleDir))
+        wordModel = self.wordModel
+        loadModel = self.loadModel
+        pickles = pJoin(self.pickleDir, '*')
+        pickleFiles = glob(pickles)
+        pickleFileNames = list()
+        for pickleFile in pickleFiles :
+            pickleFileNames.append( basename(pickleFile) )
+            wordModel.update(loadModel(pickleFile))
+        self.info('Loaded these : {} pickles.'.format(" ,".join(pickleFileNames)))
 
     def editD1(self, word) : # D1 for Distance = 1
         self.info('Generating one-distance spell errors.')
@@ -185,10 +194,10 @@ if __name__ == '__main__' :
     myLogger()
 
     sc = SpellChecker(None)
-    sc.trainAndSave('big.txt')
-    sc.loadModel('big.pickle')
-    #print(sc.correct('therr'))
     print(sc.wordModel.most_common(10))
+    #sc.trainAndSave('big.txt')
+    #sc.loadModel('big.pickle')
+    print(sc.correct('therr'))
 
     #with open('big.txt') as corpus :
     #    #sc = SpellChecker(None)
