@@ -23,7 +23,7 @@ from os.path import basename
 #from urllib.request import urlopen
 
 # SpellChecker
-from spellchecker import SpellChecker
+from spellchecker import WordModel, SpellChecker
 
 # misc
 from misc import *
