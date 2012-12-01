@@ -23,6 +23,9 @@ from time import time
 # os
 from os.path import join as pJoin
 
+# pickle
+from pickle import dump, load
+
 # config
 from config import __dir__, Config
 
@@ -48,7 +51,7 @@ class SpellChecker:
         self.info('Initializing SpellChecker.')
         self.wordModel = WordModel()
         self.loadConfig()
-        self.wordModel.update(self.trainModel(wordFile))
+        #self.wordModel.update(self.trainModel(wordFile))
         self.info('SpellChecker Initialized.')
 
     def loadConfig(self) :
@@ -77,6 +80,25 @@ class SpellChecker:
                 """.format(self.pickleDir, self.corpusDir)
                 )
 
+    def saveModel(self, wordModel, fileName) :
+        msg = 'Going to save the model as {} in {}.'.format(fileName, self.pickleDir)
+        self.info(msg)
+        try :
+            with open(pJoin(self.pickleDir, fileName), 'wb') as f :
+                dump(wordModel, f)
+            self.info('Saved sucessfully.')
+        except Exception as error :
+            self.warn('Saing aborted because of {}.'.format(repr(error)))
+
+    def loadModel(self, fileName) :
+        msg = 'Going to load the {} model from {}.'.format(fileName, self.pickleDir)
+        try :
+            with open(pJoin(self.pickleDir, fileName), 'rb') as f :
+                loadedWordModel = load(f)
+            self.wordModel.update(loadedWordModel)
+            self.info('Model loaded into the SpellChecker.wordModel.')
+        except Exception as error :
+            self.warn('An error occured while loading: {}.'.format(repr(error)))
 
     def trainModel(self, wordFile=None) :
         self.info('Training a WordModel.')
@@ -92,10 +114,21 @@ class SpellChecker:
         self.info( 'WordModel trained in {}s.'.format(time()-begin) )
         return wordModel
 
-    def saveModel(self, fileName) :
-        pass
+    def trainAndSave(self, corpusFileName) :
+        corpusPath = pJoin(self.corpusDir, corpusFileName)
+        msg = 'Train and save the wordModel from corpus file :{}'.format(corpusPath)
+        self.info(msg)
+        try :
+            with open(corpusPath) as corpusFile :
+                wordModel = self.trainModel(corpusFile)
+                pickleFileName = corpusFileName.replace('txt', 'pickle')
+                self.saveModel(wordModel, pickleFileName)
+            self.info('Trained and saved the wordModel sucessfully.')
+        except Exception as error :
+            msg ='An error occured when training and saving the wordModel : {}.'.format(repr(error))
+            self.warn(msg)
 
-    def loadModel(self, fileName) :
+    def loadModels(self) :
         pass
 
     def editD1(self, word) : # D1 for Distance = 1
@@ -144,9 +177,13 @@ if __name__ == '__main__' :
 
     myLogger()
 
-    with open('big.txt') as corpus :
-        #sc = SpellChecker(None)
-        sc = SpellChecker(corpus)
-
-    print(sc.correct('therr'))
+    sc = SpellChecker(None)
+    sc.trainAndSave('big.txt')
+    sc.loadModel('big.pickle')
+    #print(sc.correct('therr'))
     print(sc.wordModel.most_common(10))
+
+    #with open('big.txt') as corpus :
+    #    #sc = SpellChecker(None)
+    #    sc = SpellChecker(corpus)
+
