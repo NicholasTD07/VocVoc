@@ -55,7 +55,8 @@ class SpellChecker:
         self.wordModel = WordModel()
         self.loadConfig()
         self.loadModels()
-        self.info('SpellChecker Initialized.')
+        msg = 'SpellChecker Initialized with {} words collected.'.format(len(self.wordModel))
+        self.info(msg)
 
     def loadConfig(self) :
         info = self.info
@@ -99,13 +100,29 @@ class SpellChecker:
 
     def loadModel(self, fileName) :
         msg = 'Going to load the {} model from {}.'.format(fileName, self.pickleDir)
+        self.info(msg)
         try :
-            with open(pJoin(self.pickleDir, fileName), 'rb') as f :
+            path = pJoin(self.pickleDir, fileName)
+            with open(path, 'rb') as f :
                 loadedWordModel = load(f)
             self.wordModel.update(loadedWordModel)
-            self.info('Model loaded into the SpellChecker.wordModel.')
+            msg = 'Model in {} loaded into the SpellChecker.wordModel.'.format(fileName)
+            self.info(msg)
         except Exception as error :
             self.warn('An error occured while loading: {}.'.format(repr(error)))
+
+    def loadModels(self) :
+        self.info('Starting to load models in {}.'.format(self.pickleDir))
+        wordModel = self.wordModel
+        loadModel = self.loadModel
+        pickles = pJoin(self.pickleDir, '*')
+        pickleFiles = glob(pickles)
+        pickleFileNames = list()
+        for pickleFile in pickleFiles :
+            pickleFileName = basename(pickleFile)
+            pickleFileNames.append(pickleFileName)
+            wordModel.update(loadModel(pickleFileName))
+        self.info('Loaded these : {} pickles.'.format(" ,".join(pickleFileNames)))
 
     def trainModel(self, wordFile=None) :
         self.info('Training a WordModel.')
@@ -134,18 +151,6 @@ class SpellChecker:
         except Exception as error :
             msg ='An error occured when training and saving the wordModel : {}.'.format(repr(error))
             self.warn(msg)
-
-    def loadModels(self) :
-        self.info('Starting to load models in {}.'.format(self.pickleDir))
-        wordModel = self.wordModel
-        loadModel = self.loadModel
-        pickles = pJoin(self.pickleDir, '*')
-        pickleFiles = glob(pickles)
-        pickleFileNames = list()
-        for pickleFile in pickleFiles :
-            pickleFileNames.append( basename(pickleFile) )
-            wordModel.update(loadModel(pickleFile))
-        self.info('Loaded these : {} pickles.'.format(" ,".join(pickleFileNames)))
 
     def editD1(self, word) : # D1 for Distance = 1
         self.info('Generating one-distance spell errors.')
@@ -182,12 +187,21 @@ class SpellChecker:
         begin = time()
         candidates = self.known( [word] ) or \
                 self.known( self.editD1(word) ) or \
-                self.known( self.editD2(word) ) or [word]
-        self.info( '{} correct candidates generated in {}s.'.format(len(candidates), time()-begin) )
-        return sorted(candidates, key=self.wordModel.get, reverse=True) # return a sorted list with decending order.
+                self.known( self.editD2(word) )
+                #self.known( self.editD2(word) ) or [word]
+        if candidates is not None :
+            self.info( '{} correct candidates generated in {}s.'.format(len(candidates), time()-begin) )
+            # return a sorted list with decending order.
+            sortedCandidates = sorted(candidates, key=self.wordModel.get, reverse=True)
+            return sortedCandidates
+        else :
+            return None
 
 
 if __name__ == '__main__' :
+    # sys
+    from sys import argv
+
     # logger
     from VocVoc import getLogger as myLogger
 
@@ -197,7 +211,8 @@ if __name__ == '__main__' :
     print(sc.wordModel.most_common(10))
     #sc.trainAndSave('big.txt')
     #sc.loadModel('big.pickle')
-    print(sc.correct('therr'))
+    if len(argv) > 1 :
+        print(sc.correct(argv[1]))
 
     #with open('big.txt') as corpus :
     #    #sc = SpellChecker(None)
