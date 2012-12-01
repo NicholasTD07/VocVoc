@@ -23,6 +23,9 @@ from time import time
 # os
 from os.path import join as pJoin
 
+# glob
+from glob import glob
+
 # pickle
 from pickle import dump, load
 
@@ -84,6 +87,10 @@ class SpellChecker:
         msg = 'Going to save the model as {} in {}.'.format(fileName, self.pickleDir)
         self.info(msg)
         try :
+            pickles = pJoin(self.pickleDir, '*')
+            for fileNames in glob(pickles) :
+                if fileName in fileName :
+                    raise FileExistsError('Pickle file alreald exists.')
             with open(pJoin(self.pickleDir, fileName), 'wb') as f :
                 dump(wordModel, f)
             self.info('Saved sucessfully.')
