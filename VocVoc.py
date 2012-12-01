@@ -17,7 +17,8 @@ from argparse import ArgumentParser
 from interface import *
 
 # SpellChecker
-from spellchecker import WordModel
+from spellchecker import WordModel 
+# This is the KEY to solve the AttributeError when importing.
 
 def getLogger(DEBUG=False) :
     # Create and set the logger.
