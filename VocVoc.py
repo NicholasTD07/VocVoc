@@ -16,6 +16,8 @@ from argparse import ArgumentParser
 # interface
 from interface import *
 
+# SpellChecker
+from spellchecker import WordModel
 
 def getLogger(DEBUG=False) :
     # Create and set the logger.
