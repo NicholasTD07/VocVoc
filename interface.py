@@ -13,7 +13,6 @@ from PyQt4.phonon import Phonon
 # re
 from re import compile as reCompile
 
-# logging
 #import logging
 from logging import DEBUG, getLogger
 
