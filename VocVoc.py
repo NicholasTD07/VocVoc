@@ -38,7 +38,10 @@ def getLogger(DEBUG=False) :
     # Add handlers to the logger.
     for handler in [fileHandler, consoleHandler] :
         logger.addHandler(handler)
-    logger.info('Created Logger.')
+    if DEBUG :
+        logger.info('Created Logger with DEBUG on.')
+    else :
+        logger.info('Created Logger.')
 
 def VocVoc() :
     descriptionMsg = """
