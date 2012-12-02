@@ -13,14 +13,17 @@ from PyQt4.phonon import Phonon
 # re
 from re import compile as reCompile
 
-# logging
-import logging
+#import logging
+from logging import DEBUG, getLogger
 
 # os
 from os.path import basename
 
 # url
 #from urllib.request import urlopen
+
+# SpellChecker
+from spellchecker import WordModel, SpellChecker
 
 # misc
 from misc import *
@@ -39,10 +42,12 @@ class VocDialog(QDialog) :
 
     def __init__(self, parent=None) :
         super(VocDialog, self).__init__(parent)
-        self.logger = logging.getLogger('VocVoc.VocDialog')
+        self.logger = getLogger('VocVoc.VocDialog')
         self.info = self.logger.info
         self.warn = self.logger.warn
         self.info('Starting VocDialog.')
+        self.spellChecker = SpellChecker()
+        self.correct = self.spellChecker.correct
         self.mediaObeject = Phonon.createPlayer(Phonon.MusicCategory, Phonon.MediaSource(''))
         self.setupUi()
         self.connect()
@@ -82,7 +87,7 @@ class VocDialog(QDialog) :
         mediaObeject = self.mediaObeject
         loadButton.clicked.connect(self.loadFile)
         inputLine.returnPressed.connect(self.addText)
-        if self.logger.isEnabledFor(logging.DEBUG) :
+        if self.logger.isEnabledFor(DEBUG) :
             mediaObeject.stateChanged.connect( self.errorState )
         self.info('Signals and slots connected.')
 
@@ -115,10 +120,17 @@ class VocDialog(QDialog) :
         textList = self.textList
         inputLine = self.inputLine
         addItem = textList.addItem
+        addLable = lambda x : self.statusBar.addWidget( QLabel(x) )
         text = inputLine.text().strip().lower()
         self.info( 'Input is {}.'.format(text) )
         setCurrentRow = textList.setCurrentRow
 
+        candidates = self.correct(text)
+        #if len(candidates) < 1 or candidates[0] != text :
+        if candidates is None :
+            addLable('Are you sure?')
+        elif candidates[0] != text :
+            addLable('Do you mean {} ?'.format(' ,'.join(candidates)))
         addItem(text)
         inputLine.clear()
         setCurrentRow( textList.count() - 1 )
@@ -132,7 +144,7 @@ class VocDialog(QDialog) :
     def loadFile(self) :
         "Open the file dialog to select the file and try to start."
         # Open the file dialog.
-        logger = logging.getLogger('VocVoc.VocDialog.loadFile')
+        logger = getLogger('VocVoc.VocDialog.loadFile')
         info = logger.info
         info('Preparing to load file.')
         textList = self.textList
@@ -185,5 +197,8 @@ def App() :
 
 
 if __name__ == '__main__' :
-    App()
-
+    # this is why I have VocVoc.py
+    #from VocVoc import getLogger as myLogger
+    #myLogger()
+    #App()
+    pass
