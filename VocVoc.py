@@ -14,7 +14,7 @@ from logging.handlers import TimedRotatingFileHandler
 from argparse import ArgumentParser
 
 # interface
-from interface import *
+from interface import App
 
 # SpellChecker
 from spellchecker import WordModel 
@@ -45,7 +45,7 @@ def getLogger(DEBUG=False) :
 
 def VocVoc() :
     descriptionMsg = """
-            Put the input to a file and the list in the dialog.
+            Put the input to a file and the list in the dialog and pronounce it.
             If the input is a word whose sound file can be found, 
             then the file will be played.
             """
@@ -59,11 +59,17 @@ def VocVoc() :
                             help=verboseMsg,
                             action='store_true'
                             )
+    argParser.add_argument(
+                            '-p',
+                            '--autoproxy',
+                            help='Support auto proxy.',
+                            action='store_true'
+                            )
     args = argParser.parse_args()
     getLogger(args.verbose)
     logger = logging.getLogger('VocVoc')
     logger.info('Starting VocVoc.')
-    App()
+    App(autoProxy=args.autoproxy)
 
 
 if __name__ == '__main__' :
