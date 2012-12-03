@@ -45,7 +45,7 @@ def getLogger(DEBUG=False) :
 
 def VocVoc() :
     descriptionMsg = """
-            Put the input to a file and the list in the dialog and pronounce it.
+            Put the input into a file and the list in the dialog and pronounce it.
             If the input is a word whose sound file can be found, 
             then the file will be played.
             """
