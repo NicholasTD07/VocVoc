@@ -13,17 +13,20 @@ from PyQt4.phonon import Phonon
 # re
 from re import compile as reCompile
 
-#import logging
+# logging
 from logging import DEBUG, getLogger
 
 # os
 from os.path import basename, join as pJoin
 
+# tempfile
+from tempfile import NamedTemporaryFile
 # url
-#from urllib.request import urlopen
+from urllib.request import urlopen
 
 # config
 from config import __dir__
+
 # SpellChecker
 from spellchecker import WordModel, SpellChecker
 
@@ -42,7 +45,7 @@ class VocDialog(QDialog) :
     findDight = reCompile(r'\d+')
     baseURL = 'http://www.gstatic.com/dictionary/static/sounds/de/0/CHANGEME.mp3'
 
-    def __init__(self, parent=None) :
+    def __init__(self, autoProxy=False, parent=None) :
         super(VocDialog, self).__init__(parent)
         self.logger = getLogger('VocVoc.VocDialog')
         self.info = self.logger.info
@@ -51,6 +54,7 @@ class VocDialog(QDialog) :
         self.mediaObeject = Phonon.createPlayer(Phonon.MusicCategory, Phonon.MediaSource(''))
         self.setupUi()
         self.connect()
+        self.autoProxy = autoProxy
         self.spellChecker = SpellChecker()
         self.correct = self.spellChecker.correct
         self.initCountWord()
@@ -126,7 +130,18 @@ class VocDialog(QDialog) :
     def pronounce(self, word) :
         self.info('Preparing the url to pronounce.')
         url = self.baseURL.replace(self.MAGICWORD, word)
-        self.play(url)
+        if not self.autoProxy :
+            self.info('Without the autoProxy, play it using the url as the source.')
+            self.play(url)
+        else :
+            self.info('With the autoProxy, play it after downloading the file.')
+            try : # May happen HTTPError.
+                resource = urlopen(url).read()
+            except HTTPError as error :
+                self.warn(repr(error))
+            tempFile = NamedTemporaryFile()
+            tempFile.write(resource)
+            self.play(tempFile.name)
         self.info('Pronounciation ended.')
 
     def wordCount(self, word=None) :
@@ -253,11 +268,11 @@ class VocDialog(QDialog) :
             self.filePath = filePath
 
 
-def App() :
+def App(autoProxy=False) :
     from sys import argv, exit
     app = QApplication(argv)
     app.setApplicationName(r"TheDevil's VocVoc")
-    dialog = VocDialog()
+    dialog = VocDialog(autoProxy=False)
     dialog.show()
     exit( app.exec_() )
 
