@@ -17,7 +17,7 @@ Install
 Just download the latest version from [here] [master].
 
 Before you run it by clicking VocVoc.py or ./VocVoc.py in the console,
-as I wrote this in [Python][] ,actually in [Python3.3] [Pthon3], and used [PyQt][] as the graphical library,
+as I wrote this in [Python][] ,actually in [Python3.3][Pthon3], and used [PyQt][] as the graphical library,
 you need to have [Python3][] and [PyQt][].
 If you use linux, say Arch, please install Python3 and PyQt with pacman command.
 If you use Windows, see Download below.
