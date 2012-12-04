@@ -68,7 +68,10 @@ def VocVoc() :
     args = argParser.parse_args()
     getLogger(args.verbose)
     logger = logging.getLogger('VocVoc')
-    logger.info('Starting VocVoc.')
+    if args.autoproxy :
+        logger.info('Starting VocVoc with autoProxy.')
+    else :
+        logger.info('Starting VocVoc without autoProxy.')
     App(autoProxy=args.autoproxy)
 
 
