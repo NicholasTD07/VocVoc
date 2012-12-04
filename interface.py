@@ -103,13 +103,11 @@ class VocDialog(QDialog) :
     def connect(self) :
         "Connect signals and slots in the UI."
         self.info('Connecting signals and slots.')
-        inputLine = self.inputLine
-        loadButton = self.loadButton
-        mediaObeject = self.mediaObeject
-        loadButton.clicked.connect(self.loadFile)
-        inputLine.returnPressed.connect(self.addText)
+        self.loadButton.clicked.connect(self.loadFile)
+        self.inputLine.returnPressed.connect(self.addText)
+        self.textList.itemDoubleClicked.connect(self.itemCliecked)
         if self.logger.isEnabledFor(DEBUG) :
-            mediaObeject.stateChanged.connect( self.errorState )
+            self.mediaObeject.stateChanged.connect( self.errorState )
         self.info('Signals and slots connected.')
 
     def errorState(self, state) :
@@ -127,6 +125,11 @@ class VocDialog(QDialog) :
             self.warn(msg)
         else :
             self.info(msg)
+
+    def itemCliecked(self, item) :
+        text = item.text()
+        if not text.startswith('#') :
+            self.pronounce(item.text())
 
     def play(self, path) :
         self.mediaObeject.setCurrentSource(Phonon.MediaSource(path))
