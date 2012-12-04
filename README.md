@@ -11,10 +11,32 @@ Why use it?
 + If you are trying to memorize (a lot of) vocabulary.
 + If you want to put all these vocabulary into a file for later review.
 
+Install
+-------
+
+Just download the latest version from [here] [master].
+
+Before you run it by clicking VocVoc.py or ./VocVoc.py in the console,
+as I wrote this in [Python][] (actually in [Python3.3][Pthon3]) and used [PyQt][] as the graphical library,
+you need to have [Python3][] and [PyQt][].
+If you use linux, say Arch, please install Python3 and PyQt with pacman command.
+If you use Windows, see Download below.
+
+Download
+--------
+
+[Python3.3 for Windows] [Python3.3-win]
+[PyQt 4.9.5 for Windows] [PyQt-Py3.3-x64-4.9.5]
+
 Why do I write it?
 --------------
 
-As preparing for the GRE test, especially the vocabulary part following a alphabetic order, with so many words looking just like each other but with different pronunciations, I fell really unconfident about their pronunciation, through recentlly I got a score at 7.5 in IELTS. So I would like to write a small program for myself which I can use to find out pronunciation of different vocabulary. After some days of programming, this is it.
+As preparing for the GRE test, especially the vocabulary part following a 
+alphabetic order, with so many words looking just like each other but with 
+different pronunciations, I fell really unconfident about their pronunciation,
+through recentlly I got a score at 7.5 in IELTS. So I would like to write a
+small program for myself which I can use to find out pronunciation of
+different vocabulary. After some days of programming, this is it.
 
 TODO
 ----
@@ -24,3 +46,15 @@ TODO
 *   take text files in `VocVoc/corpuses` and automatically train the model and save that.
 *   find the word in certain websites' pages and present the context.
 
+License
+-------
+
+Please see [GNU General Public License v3] [GPLv3]
+
+[master]:https://github.com/thedevil7/VocVoc/archive/master.zip
+[Python]:http://www.python.org/
+[Python3]:http://www.python.org/download/releases/3.3.0/
+[Python3.3-win]:http://www.python.org/ftp/python/3.3.0/python-3.3.0.msi
+[PyQt]:http://www.riverbankcomputing.com/software/pyqt/intro
+[PyQt-Py3.3-x64-4.9.5]:http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.9.5/PyQt-Py3.3-x64-gpl-4.9.5-1.exe
+[GPLv3]:http://www.gnu.org/licenses/gpl-3.0-standalone.html
