@@ -62,7 +62,7 @@ def VocVoc() :
     argParser.add_argument(
                             '-p',
                             '--autoproxy',
-                            help='Support auto proxy.',
+                            help='(EXPRIMENTAL)Using urllib to do auto proxy.',
                             action='store_true'
                             )
     args = argParser.parse_args()
