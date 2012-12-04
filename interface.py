@@ -21,8 +21,10 @@ from os.path import basename, join as pJoin
 
 # tempfile
 from tempfile import NamedTemporaryFile
+
 # url
 from urllib.request import urlopen
+from urllib.error import HTTPError
 
 # config
 from config import __dir__
@@ -50,7 +52,10 @@ class VocDialog(QDialog) :
         self.logger = getLogger('VocVoc.VocDialog')
         self.info = self.logger.info
         self.warn = self.logger.warn
-        self.info('Starting VocDialog.')
+        if autoProxy :
+            self.info('Starting VocDialog with autoProxy.')
+        else :
+            self.info('Starting VocDialog without autoProxy.')
         self.mediaObeject = Phonon.createPlayer(Phonon.MusicCategory, Phonon.MediaSource(''))
         self.setupUi()
         self.connect()
@@ -137,11 +142,12 @@ class VocDialog(QDialog) :
             self.info('With the autoProxy, play it after downloading the file.')
             try : # May happen HTTPError.
                 resource = urlopen(url).read()
+                tempFile = NamedTemporaryFile()
+                tempFile.write(resource)
+                self.play(tempFile.name)
             except HTTPError as error :
                 self.warn(repr(error))
-            tempFile = NamedTemporaryFile()
-            tempFile.write(resource)
-            self.play(tempFile.name)
+                self.warn('Pronounciation FAILED.')
         self.info('Pronounciation ended.')
 
     def wordCount(self, word=None) :
@@ -217,10 +223,10 @@ class VocDialog(QDialog) :
         self.statusBar.clearMessage()
         textList.setCurrentRow( textList.count() - 1 )
 
-        try : # With the try statement, it can be used as a pronounciation helper.
+        try : # With the try statement, it can be used as a pronunciation helper.
             flush(self.filePath, text)
         except Exception :
-            self.info('Using this freely without writing to a file as a pronounciation helper.')
+            self.info('Using this freely without writing to a file as a pronunciation helper.')
 
     def loadFile(self) :
         "Open the file dialog to select the file and try to start."
@@ -272,7 +278,7 @@ def App(autoProxy=False) :
     from sys import argv, exit
     app = QApplication(argv)
     app.setApplicationName(r"TheDevil's VocVoc")
-    dialog = VocDialog(autoProxy=False)
+    dialog = VocDialog(autoProxy=autoProxy)
     dialog.show()
     exit( app.exec_() )
 
