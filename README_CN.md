@@ -17,7 +17,7 @@ VocVoc 是学习单词的小助手.
 请在[这里][master] 下载最新的版本.
 
 在你通过点击 VocVoc.py 或从命令行运行它之前, 请先下载运行所需的相关库文件.
-因为我使用了 [Python][] (实际上是 [Python3.3][Python3] 这门语言写下了 VocVoc,
+因为我使用了 [Python][] ,实际上是 [Python3.3][Python3], 这门语言写下了 VocVoc,
 并且利用 [PyQt][] 作为图形库, 所以你需要先安装他们.
 如果你使用 Linux 系统, 请使用发行版自带的相关命令安装 Python3 和 PyQt.
 如果你使用 Windows 系统, 请看下面的 下载.
