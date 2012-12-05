@@ -26,7 +26,10 @@ VocVoc 是学习单词的小助手.
 ----
 
 [Python3.3 for Windows] [Python3.3-win]
-[PyQt 4.9.5 for Windows] [PyQt-Py3.3-x64-4.9.5]
+
+[PyQt 4.9.5 for Windows-x86] [PyQt-Py3.3-x86-4.9.5]
+
+[PyQt 4.9.5 for Windows-x64] [PyQt-Py3.3-x64-4.9.5]
 
 为什么会写这个软件?
 -------------------
@@ -56,4 +59,5 @@ VocVoc 是学习单词的小助手.
 [Python3.3-win]:http://www.python.org/ftp/python/3.3.0/python-3.3.0.msi
 [PyQt]:http://www.riverbankcomputing.com/software/pyqt/intro
 [PyQt-Py3.3-x64-4.9.5]:http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.9.5/PyQt-Py3.3-x64-gpl-4.9.5-1.exe
+[PyQt-Py3.3-x86-4.9.5]:http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.9.5/PyQt-Py3.3-x86-gpl-4.9.5-1.exe
 [GPLv3]:http://www.gnu.org/licenses/gpl-3.0-standalone.html
