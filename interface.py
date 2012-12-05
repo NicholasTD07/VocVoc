@@ -103,13 +103,11 @@ class VocDialog(QDialog) :
     def connect(self) :
         "Connect signals and slots in the UI."
         self.info('Connecting signals and slots.')
-        inputLine = self.inputLine
-        loadButton = self.loadButton
-        mediaObeject = self.mediaObeject
-        loadButton.clicked.connect(self.loadFile)
-        inputLine.returnPressed.connect(self.addText)
+        self.loadButton.clicked.connect(self.loadFile)
+        self.inputLine.returnPressed.connect(self.addText)
+        self.textList.itemActivated.connect(self.itemActivated)
         if self.logger.isEnabledFor(DEBUG) :
-            mediaObeject.stateChanged.connect( self.errorState )
+            self.mediaObeject.stateChanged.connect( self.errorState )
         self.info('Signals and slots connected.')
 
     def errorState(self, state) :
@@ -127,6 +125,13 @@ class VocDialog(QDialog) :
             self.warn(msg)
         else :
             self.info(msg)
+
+    def itemActivated(self, item) :
+        row = self.textList.row(item)
+        text = item.text()
+        if not text.startswith('#') :
+            self.pronounce(item.text())
+        self.textList.setCurrentRow(row+1)
 
     def play(self, path) :
         self.mediaObeject.setCurrentSource(Phonon.MediaSource(path))
@@ -240,7 +245,6 @@ class VocDialog(QDialog) :
             filePath = self.fileDialog.selectedFiles()[0]
             fileName = basename(filePath)
             # Create or read file.
-            #if QFile.exists(filePath) : # File exists.
             try :
                 with open(filePath, 'r+') as textFile :
                     info('File exists, openning up.')
@@ -248,7 +252,8 @@ class VocDialog(QDialog) :
                 writenText = writenText.splitlines()
                 textList.clear()
                 textList.addItems( writenText )
-                textList.setCurrentRow( len(writenText)-1 )
+                if not 'end' in writenText[-1].strip().lower() :
+                    textList.setCurrentRow( len(writenText)-1 )
                 info('Added items to list and set current row to the last row.')
             except IOError as error : # File does not exist. We create one.
                 info('File does not exist. Trying to find the dight in the name.')
