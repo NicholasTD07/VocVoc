@@ -131,7 +131,11 @@ class VocDialog(QDialog) :
         text = item.text()
         if not text.startswith('#') :
             self.pronounce(item.text())
-        self.textList.setCurrentRow(row+1)
+        if row+1 != self.textList.count() :
+            self.info('NOT last row!')
+            self.textList.setCurrentRow(row+1)
+        else :
+            self.info('Last row!')
 
     def play(self, path) :
         self.mediaObeject.setCurrentSource(Phonon.MediaSource(path))
