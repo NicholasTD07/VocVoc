@@ -135,7 +135,7 @@ class VocDialog(QDialog) :
         "Connect signals and slots in the UI."
         self.info('Connecting signals and slots.')
         self.loadButton.clicked.connect(self.loadFile)
-        self.inputLine.returnPressed.connect(self.addText)
+        self.inputLine.returnPressed.connect(self.enteredText)
         self.textList.itemActivated.connect(self.itemActivated)
         self.toggleButton.clicked.connect(self.toggleViewer)
         if self.logger.isEnabledFor(DEBUG) :
@@ -252,12 +252,8 @@ class VocDialog(QDialog) :
 
         return self.wordCount(word)
 
-    def addText(self) :
-        "Get the text from the input line and add it to the file and the list."
-        self.info('Adding text to textList and the file.')
+    def addText(self, text) :
         textList = self.textList
-        text = self.inputLine.text().strip().lower()
-        self.info( 'Input is {}.'.format(text) )
 
         if text.startswith('#') : # It is a comment.
             pass
@@ -275,7 +271,18 @@ class VocDialog(QDialog) :
         try : # With the try statement, it can be used as a pronunciation helper.
             flush(self.filePath, text)
         except Exception :
-            self.info('Using this freely without writing to a file as a pronunciation helper.')
+            self.debug('Using this freely without writing to a file as a pronunciation helper.')
+
+    def enteredText(self) :
+        "Get the text from the input line and add it to the file and the list."
+        self.info('Adding text to textList and the file.')
+        textList = self.textList
+        text = self.inputLine.text().strip().lower()
+        self.debug( 'Input is {}.'.format(text) )
+
+        self.addText(text)
+
+        self.info('Text added.')
 
     def loadFile(self) :
         "Open the file dialog to select the file and try to start."
