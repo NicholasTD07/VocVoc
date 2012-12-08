@@ -11,12 +11,17 @@ def flush(filePath, text) :
         textFile.write(text)
 
 def locateWord(filePath, word) :
+    """
+    Return (text, locatedLines).
+    text -- the text read from file.
+    locatedLines -- lines with the word in put in a list.
+    """
     locatedLines = list()
     with open(filePath) as textFile :
         lines = textFile.readlines()
     for line in lines :
         if word in line :
             locatedLines.append(lines.index(line))
-    return locatedLines
+    return (lines, locatedLines)
 
 
