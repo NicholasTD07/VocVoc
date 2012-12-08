@@ -52,6 +52,7 @@ class VocDialog(QDialog) :
         self.logger = getLogger('VocVoc.VocDialog')
         self.info = self.logger.info
         self.warn = self.logger.warn
+        self.debug = self.logger.debug
         if autoProxy :
             self.info('Starting VocDialog with autoProxy.')
         else :
@@ -64,6 +65,10 @@ class VocDialog(QDialog) :
         self.correct = self.spellChecker.correct
         self.initCountWord()
         self.info('VocDialog started.')
+
+    def resizeEvent(self, event) :
+        self.debug("Resized to {}.".format(self.size()))
+        super(VocDialog, self).resizeEvent(event)
 
     def initCountWord(self) :
         """
@@ -96,7 +101,7 @@ class VocDialog(QDialog) :
             VBox.addWidget(item)
 
         self.setLayout(VBox)
-        self.resize(500, 450)
+        self.resize(335, 475)
         self.setWindowTitle("VocVoc -- Your Vocabulary Helper")
         self.info('UI is set up now.')
 
