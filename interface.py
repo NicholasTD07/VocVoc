@@ -93,6 +93,7 @@ class VocDialog(QDialog) :
         self.inputLine = QLineEdit(self)
 
         self.toggleButton = QPushButton(r'Show/Hide', self)
+        self.toggleButton.setAutoDefault(False)
         self.toggleButton.setCheckable(True)
 
         self.textLabel = QLabel()
