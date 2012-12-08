@@ -19,6 +19,8 @@ def locateWord(filePath, word) :
     locatedLines = list()
     with open(filePath) as textFile :
         lines = textFile.readlines()
+        # Put the file path into the first item in lines.
+        lines.insert(0, filePath) 
     for line in lines :
         if word in line :
             locatedLines.append(lines.index(line))
