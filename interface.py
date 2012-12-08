@@ -6,7 +6,7 @@ This is the interface of the VocVoc.
 # PyQt4
 from PyQt4.QtGui import QDialog, QPushButton, QListWidget, QLineEdit,\
         QStatusBar, QLabel, QVBoxLayout, QHBoxLayout, QFileDialog,\
-        QListWidgetItem, QMessageBox, QApplication
+        QListWidgetItem, QTextBrowser, QMessageBox, QApplication
 from PyQt4.QtCore import QFile, Qt
 from PyQt4.phonon import Phonon
 
@@ -106,15 +106,27 @@ class VocDialog(QDialog) :
         msg = 'Hello World! I love YOU!!!'
         self.statusBar.showMessage(msg, 5000)
 
-        VBox = QVBoxLayout()
+        vBox = QVBoxLayout()
         items = [self.loadButton, self.textList, self.hBox, self.statusBar]
         for item in items :
             try :
-                VBox.addWidget(item)
+                vBox.addWidget(item)
             except :
-                VBox.addLayout(item)
+                vBox.addLayout(item)
 
-        self.setLayout(VBox)
+        self.textViewer = QTextBrowser()
+        self.textViewer.setHidden(True)
+
+        HBox = QHBoxLayout()
+
+        items = [vBox, self.textViewer]
+        for item in items :
+            try :
+                HBox.addWidget(item)
+            except :
+                HBox.addLayout(item)
+                
+        self.setLayout(HBox)
         self.resize(350, 500)
         self.setWindowTitle("VocVoc -- Your Vocabulary Helper")
         self.info('UI is set up now.')
@@ -125,6 +137,7 @@ class VocDialog(QDialog) :
         self.loadButton.clicked.connect(self.loadFile)
         self.inputLine.returnPressed.connect(self.addText)
         self.textList.itemActivated.connect(self.itemActivated)
+        self.toggleButton.clicked.connect(self.toggleViewer)
         if self.logger.isEnabledFor(DEBUG) :
             self.mediaObeject.stateChanged.connect( self.errorState )
         self.info('Signals and slots connected.')
@@ -155,6 +168,14 @@ class VocDialog(QDialog) :
             self.textList.setCurrentRow(row+1)
         else :
             self.info('Last row!')
+
+    def toggleViewer(self) :
+        if self.textViewer.isHidden() :
+            self.resize(700, 500)
+            self.textViewer.show()
+        else :
+            self.textViewer.hide()
+            self.resize(350, 500)
 
     def play(self, path) :
         self.mediaObeject.setCurrentSource(Phonon.MediaSource(path))
