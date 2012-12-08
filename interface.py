@@ -6,7 +6,7 @@ This is the interface of the VocVoc.
 # PyQt4
 from PyQt4.QtGui import QDialog, QPushButton, QListWidget, QLineEdit,\
         QStatusBar, QLabel, QVBoxLayout, QHBoxLayout, QFileDialog,\
-        QListWidgetItem, QTextBrowser, QMessageBox, QApplication
+        QListWidgetItem, QTextEdit, QMessageBox, QApplication
 from PyQt4.QtCore import QFile, Qt
 from PyQt4.phonon import Phonon
 
@@ -26,6 +26,8 @@ from tempfile import NamedTemporaryFile
 from urllib.request import urlopen
 from urllib.error import HTTPError
 
+# glob
+from glob import glob
 # config
 from config import __dir__
 
@@ -62,6 +64,7 @@ class VocDialog(QDialog) :
         self.connect()
         self.autoProxy = autoProxy
         self.spellChecker = SpellChecker()
+        self.corpusDir = self.spellChecker.corpusDir
         self.correct = self.spellChecker.correct
         self.initCountWord()
         self.info('VocDialog started.')
@@ -114,8 +117,9 @@ class VocDialog(QDialog) :
             except :
                 vBox.addLayout(item)
 
-        self.textViewer = QTextBrowser()
+        self.textViewer = QTextEdit()
         self.textViewer.setHidden(True)
+        self.textViewer.setReadOnly(True)
 
         HBox = QHBoxLayout()
 
@@ -163,6 +167,7 @@ class VocDialog(QDialog) :
         text = item.text()
         if not text.startswith('#') :
             self.pronounce(item.text())
+            self.findWord(text)
         if row+1 != self.textList.count() :
             self.info('NOT last row!')
             self.textList.setCurrentRow(row+1)
@@ -199,6 +204,37 @@ class VocDialog(QDialog) :
                 self.warn('Pronounciation FAILED.')
         self.info('Pronounciation ended.')
 
+    def findWord(self, word) :
+        self.info('Finding word in the text file.')
+        contexts = self.textViewer
+        if contexts.isHidden() :
+            return
+        else :
+            pass
+        limit = 5
+        textLines = list()
+        corpuses = glob(''.join([self.corpusDir, '/*']))
+        self.debug('Found corpuses : {}.'.format(corpuses))
+        contexts.clear()
+        for corpus in corpuses :
+            textLines.append(locateWord(corpus, word))
+        for textLine in textLines :
+            text, lines = textLine[0], textLine[1]
+            title = ''.join( ['Title : ', basename(text[-1])] )
+            if lines :
+                for line in lines :
+                    wantedLines = text[line-limit: line+limit]
+                    #cleanLines = map(self.replace, wantedLines)
+                    context = ''.join(wantedLines)
+                    context = context.replace(word, ' '.join(['*', word, '*']))
+                    context = context.replace('\n\n', self.MAGICWORD)
+                    context = context.replace('\n', ' ')
+                    context = context.replace(self.MAGICWORD, '\n\n')
+                    contexts.append(''.join([title, '\n', context, '\n\n']))
+            else :
+                contexts.append('Sorry, {} found.'.format(word))
+        contexts.find(word)
+
     def wordCount(self, word=None) :
         """
         This function uses self.countWord to decide whether record and pronounce the input or not.
@@ -212,13 +248,13 @@ class VocDialog(QDialog) :
             return True
         elif self.countWord[0] == 1 :
             msg = 'Maybe the word is WRONG? Playing beep and saving the word.'
-            self.info(msg)
+            self.debug(msg)
             self.countWord[1] = word
             self.play('beep.mp3')
             return False
         elif self.countWord[0] == 2 :
             if word != self.countWord[1] : # Different word.
-                self.logger.debug('DIFFRENT WORD.')
+                self.debug('DIFEFRENT WORD.')
                 self.countWord[0] = 1 # Check again.
                 self.countWord[1] = word # Update it.
                 self.play('beep.mp3')
@@ -243,8 +279,9 @@ class VocDialog(QDialog) :
             msg = 'Do you mean {} ?'.format(' ,'.join(candidates))
             showMessage(msg, 5000)
         else : # Collected in the wordModel.
-            self.info('Word collected in the wordModel.')
+            self.findWord(word)
             self.countWord[0] = 0
+            self.debug('Word collected in the wordModel.')
             return True
 
         msg = 'wrongTime = {} with the word {}.'.format(self.countWord[0], word)
@@ -305,6 +342,8 @@ class VocDialog(QDialog) :
                 textList.addItems( writenText )
                 if not 'end' in writenText[-1].strip().lower() :
                     textList.setCurrentRow( len(writenText)-1 )
+                else :
+                    textList.setCurrentRow( 0 )
                 info('Added items to list and set current row to the last row.')
             except IOError as error : # File does not exist. We create one.
                 info('File does not exist. Trying to find the dight in the name.')
