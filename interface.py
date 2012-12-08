@@ -5,8 +5,8 @@ This is the interface of the VocVoc.
 
 # PyQt4
 from PyQt4.QtGui import QDialog, QPushButton, QListWidget, QLineEdit,\
-        QStatusBar, QLabel, QVBoxLayout, QFileDialog, QListWidgetItem,\
-        QMessageBox, QApplication
+        QStatusBar, QLabel, QVBoxLayout, QHBoxLayout, QFileDialog,\
+        QListWidgetItem, QMessageBox, QApplication
 from PyQt4.QtCore import QFile, Qt
 from PyQt4.phonon import Phonon
 
@@ -85,23 +85,36 @@ class VocDialog(QDialog) :
         self.fileDialog.setFileMode(QFileDialog.AnyFile)
         self.fileDialog.setViewMode(QFileDialog.Detail)
 
-        self.loadButton = QPushButton( r"Open\New :", self)
+        self.loadButton = QPushButton( r'Open/New :', self)
         self.loadButton.setAutoDefault(False)
 
         self.textList = QListWidget(self)
 
         self.inputLine = QLineEdit(self)
 
+        self.toggleButton = QPushButton(r'Show/Hide', self)
+        self.toggleButton.setCheckable(True)
+
+        self.textLabel = QLabel()
+
+        self.hBox = QHBoxLayout()
+        self.hBox.addWidget(self.inputLine)
+        self.hBox.addWidget(self.toggleButton)
+
         self.statusBar = QStatusBar(self)
         msg = 'Hello World! I love YOU!!!'
         self.statusBar.showMessage(msg, 5000)
 
         VBox = QVBoxLayout()
-        for item in [self.loadButton, self.textList, self.inputLine, self.statusBar] :
-            VBox.addWidget(item)
+        items = [self.loadButton, self.textList, self.hBox, self.statusBar]
+        for item in items :
+            try :
+                VBox.addWidget(item)
+            except :
+                VBox.addLayout(item)
 
         self.setLayout(VBox)
-        self.resize(335, 475)
+        self.resize(350, 500)
         self.setWindowTitle("VocVoc -- Your Vocabulary Helper")
         self.info('UI is set up now.')
 
