@@ -69,6 +69,10 @@ class VocDialog(QDialog) :
         self.initCountWord()
         self.info('VocDialog started.')
 
+    def keyPressEvent(self, event) :
+        self.debug('Key is {}.'.format(event.key()))
+        super(VocDialog, self).keyPressEvent(event)
+
     def resizeEvent(self, event) :
         self.debug("Resized to {}.".format(self.size()))
         super(VocDialog, self).resizeEvent(event)
@@ -169,10 +173,10 @@ class VocDialog(QDialog) :
             self.pronounce(item.text())
             self.findWord(text)
         if row+1 != self.textList.count() :
-            self.info('NOT last row!')
+            self.debug('NOT last row!')
             self.textList.setCurrentRow(row+1)
         else :
-            self.info('Last row!')
+            self.debug('Last row!')
 
     def toggleViewer(self) :
         if self.textViewer.isHidden() :
@@ -190,7 +194,7 @@ class VocDialog(QDialog) :
         self.info('Preparing the url to pronounce.')
         url = self.baseURL.replace(self.MAGICWORD, word)
         if not self.autoProxy :
-            self.info('Without the autoProxy, play it using the url as the source.')
+            self.debug('Without the autoProxy, play it using the url as the source.')
             self.play(url)
         else :
             self.info('With the autoProxy, play it after downloading the file.')
@@ -234,6 +238,7 @@ class VocDialog(QDialog) :
             else :
                 contexts.append('Sorry, {} found.'.format(word))
         contexts.find(word)
+        self.info('Word found and showed in the textViewer.')
 
     def wordCount(self, word=None) :
         """
@@ -290,6 +295,7 @@ class VocDialog(QDialog) :
         return self.wordCount(word)
 
     def addText(self, text) :
+        self.info('Starting to add text.')
         textList = self.textList
 
         if text.startswith('#') : # It is a comment.
@@ -309,6 +315,7 @@ class VocDialog(QDialog) :
             flush(self.filePath, text)
         except Exception :
             self.debug('Using this freely without writing to a file as a pronunciation helper.')
+        self.info('Text added.')
 
     def enteredText(self) :
         "Get the text from the input line and add it to the file and the list."
@@ -326,16 +333,17 @@ class VocDialog(QDialog) :
         # Open the file dialog.
         logger = getLogger('VocVoc.VocDialog.loadFile')
         info = logger.info
-        info('Preparing to load file.')
+        debug = logger.debug
+        debug('Preparing to load file.')
         textList = self.textList
         if ( self.fileDialog.exec() ) :
-            info('Dialog executed sucessfully.')
+            debug('Dialog executed sucessfully.')
             filePath = self.fileDialog.selectedFiles()[0]
             fileName = basename(filePath)
             # Create or read file.
             try :
                 with open(filePath, 'r+') as textFile :
-                    info('File exists, openning up.')
+                    debug('File exists, openning up.')
                     writenText = textFile.read()
                 writenText = writenText.splitlines()
                 textList.clear()
@@ -344,9 +352,9 @@ class VocDialog(QDialog) :
                     textList.setCurrentRow( len(writenText)-1 )
                 else :
                     textList.setCurrentRow( 0 )
-                info('Added items to list and set current row to the last row.')
+                debug('Added items to list and set current row to the last row.')
             except IOError as error : # File does not exist. We create one.
-                info('File does not exist. Trying to find the dight in the name.')
+                debug('File does not exist. Trying to find the dight in the name.')
                 listNumber = self.findDight.search(fileName)
                 if listNumber is None : # No number found in the text.
                     logger.warn('Dight not found in the filename. Try again.')
@@ -356,17 +364,18 @@ class VocDialog(QDialog) :
                             QMessageBox.Ok)
                     return msg
                 else : # No existing file but found the number in the file name.
-                    info('Dight Found. Creating file and adding first line.')
+                    debug('Dight Found. Creating file and adding first line.')
                     with open(filePath, 'x') as textFile :
                         firstLine = ''.join( ['# list ' ,str( listNumber.group() )] ) # Cannot put '\n' here.
                         textFile.write( ''.join([firstLine ,'\n']) )
                     textList.clear()
                     textList.addItem(firstLine) # Otherwise there would be a new line in the list.
 
-            info('Set inputLine to write-enabled.')
+            debug('Set inputLine to write-enabled.')
             self.inputLine.setReadOnly(False)
-            info('Pass textFile to the dialog')
+            debug('Pass textFile to the dialog')
             self.filePath = filePath
+            info('File loaded.')
 
 
 def App(autoProxy=False) :
