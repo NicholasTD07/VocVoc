@@ -27,8 +27,9 @@ class Config :
     def __init__(self) :
         self.logger = getLogger('VocVoc.Config')
         self.info = self.logger.info
+        self.debug = self.logger.debug
         self.warn = self.logger.warn
-        self.info('Initializing Config.')
+        self.debug('Initializing Config.')
         self.config = ConfigParser()
         self.config.read(__config__)
         self.getConfig()
