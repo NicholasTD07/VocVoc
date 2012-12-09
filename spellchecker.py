@@ -50,13 +50,14 @@ class SpellChecker:
     def __init__(self, wordFile=None) :
         self.logger = getLogger('VocVoc.SpellChecker')
         self.info = self.logger.info
+        self.debug = self.logger.debug
         self.warn = self.logger.warn
         self.info('Initializing SpellChecker.')
         self.wordModel = WordModel()
         self.loadConfig()
         self.loadModels()
         msg = 'SpellChecker Initialized with {} words collected.'.format(len(self.wordModel))
-        self.info(msg)
+        self.debug(msg)
 
     def loadConfig(self) :
         info = self.info
@@ -67,22 +68,23 @@ class SpellChecker:
         corpusDir = config.corpusDir
         corpusDirName = config.corpusDirName
         if pickleDir :
-            info('PickleDir Found in config.ini.')
+            debug('PickleDir Found in config.ini.')
             self.pickleDir = pickleDir
         else :
-            info('PickleDir NOT Found in config.ini.')
+            debug('PickleDir NOT Found in config.ini.')
             self.pickleDir = pJoin(__dir__, pickleDirName)
         if corpusDir :
-            info('CorpusDir Found in config.ini.')
+            debug('CorpusDir Found in config.ini.')
             self.corpusDir = corpusDir
         else :
-            info('CorpusDir NOT Found in config.ini.')
+            debug('CorpusDir NOT Found in config.ini.')
             self.corpusDir = pJoin(__dir__, corpusDirName)
-        info("""Config listed below:
+        debug("""Config listed below:
                 pickleDir : {},
                 corpusDir : {}
                 """.format(self.pickleDir, self.corpusDir)
                 )
+        info('Config got from config file config.ini.')
 
     def saveModel(self, wordModel, fileName) :
         msg = 'Going to save the model as {} in {}.'.format(fileName, self.pickleDir)
@@ -188,7 +190,6 @@ class SpellChecker:
         candidates = self.known( [word] ) or \
                 self.known( self.editD1(word) ) or \
                 self.known( self.editD2(word) )
-                #self.known( self.editD2(word) ) or [word]
         if candidates is not None :
             self.info( '{} correct candidates generated in {}s.'.format(len(candidates), time()-begin) )
             # return a sorted list with decending order.
