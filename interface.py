@@ -7,7 +7,7 @@ This is the interface of the VocVoc.
 from PyQt4.QtGui import QDialog, QPushButton, QListWidget, QLineEdit,\
         QStatusBar, QLabel, QVBoxLayout, QHBoxLayout, QFileDialog,\
         QListWidgetItem, QTextEdit, QMessageBox, QApplication
-from PyQt4.QtCore import QFile, Qt
+from PyQt4.QtCore import QFile, Qt, pyqtSignal
 from PyQt4.phonon import Phonon
 
 # re
@@ -41,6 +41,48 @@ from misc import *
 __all__ = ['VocDialog', 'App']
 
 
+class tabEnabledLineEdit(QLineEdit) :
+
+    keyCode = { 16777249: 'Ctrl',
+                78 : 'n',
+                80 : 'p'
+                }
+
+    ctrlN = pyqtSignal()
+    ctrlP = pyqtSignal()
+                
+    def __init__(self, parent=None) :
+        self.logger = getLogger('VocVoc.VocDialog.lineEdit')
+        self.info = self.logger.info
+        self.debug = self.logger.debug
+        self.keys = list()
+        super(tabEnabledLineEdit, self).__init__(parent)
+
+    def keyPressEvent(self, event) :
+        keys = self.keys
+        keyCode = self.keyCode
+        key = event.key()
+        if key in keyCode.keys() :
+            keys.append(keyCode[key])
+        self.debug('Key pressed : {}.'.format(key))
+        if 'Ctrl' in keys :
+            if 'n' in keys :
+                self.ctrlN.emit()
+                self.debug('Ctrl and n pressed.')
+            elif 'p' in keys :
+                self.ctrlP.emit()
+                self.debug('Ctrl and p pressed.')
+        super(tabEnabledLineEdit, self).keyPressEvent(event)
+
+    def keyReleaseEvent(self, event) :
+        key = event.key()
+        keyCode = self.keyCode
+        if key in keyCode.keys() :
+            self.keys.remove(keyCode[key])
+        self.debug('Key released : {}.'.format(key))
+        super(tabEnabledLineEdit, self).keyReleaseEvent(event)
+
+
 class VocDialog(QDialog) :
 
     """This is the dialog which presents the interface and organise everything."""
@@ -62,11 +104,12 @@ class VocDialog(QDialog) :
         self.mediaObeject = Phonon.createPlayer(Phonon.MusicCategory, Phonon.MediaSource(''))
         self.setupUi()
         self.connect()
+        self.initCountWord()
+        self.candidates = None
         self.autoProxy = autoProxy
         self.spellChecker = SpellChecker()
-        self.corpusDir = self.spellChecker.corpusDir
         self.correct = self.spellChecker.correct
-        self.initCountWord()
+        self.corpusDir = self.spellChecker.corpusDir
         self.info('VocDialog started.')
 
     def keyPressEvent(self, event) :
@@ -97,7 +140,7 @@ class VocDialog(QDialog) :
 
         self.textList = QListWidget(self)
 
-        self.inputLine = QLineEdit(self)
+        self.inputLine = tabEnabledLineEdit(self)
 
         self.toggleButton = QPushButton(r'Show/Hide', self)
         self.toggleButton.setAutoDefault(False)
@@ -144,6 +187,8 @@ class VocDialog(QDialog) :
         self.info('Connecting signals and slots.')
         self.loadButton.clicked.connect(self.loadFile)
         self.inputLine.returnPressed.connect(self.enteredText)
+        self.inputLine.ctrlN.connect(self.completeHandler)
+        self.inputLine.ctrlP.connect(lambda : self.completeHandler(False))
         self.textList.itemActivated.connect(self.itemActivated)
         self.toggleButton.clicked.connect(self.toggleViewer)
         if self.logger.isEnabledFor(DEBUG) :
@@ -186,6 +231,34 @@ class VocDialog(QDialog) :
             self.textViewer.hide()
             self.resize(350, 500)
 
+    def backAndForward(self, forward=True) :
+        inputLine = self.inputLine
+        word = inputLine.text()
+        setText = inputLine.setText
+        candidates = self.candidates
+        count = len(candidates)
+        try :
+            position = candidates.index(word)
+            self.debug('Position found.')
+        except :
+            position = None
+            self.debug('Position not found.')
+        if forward :
+            if position is None or position == count - 1 : # At end
+                position = -1
+            setText( candidates[position+1] )
+        else :
+            if position is None or position == 0 :
+                position = count
+            setText( candidates[position-1] )
+
+    def completeHandler(self, goNext=True) :
+        inputLine = self.inputLine
+        candidates = self.candidates
+        word = inputLine.text()
+        if candidates :
+            self.backAndForward(goNext)
+
     def play(self, path) :
         self.mediaObeject.setCurrentSource(Phonon.MediaSource(path))
         self.mediaObeject.play()
@@ -210,16 +283,17 @@ class VocDialog(QDialog) :
 
     def findWord(self, word) :
         self.info('Finding word in the text file.')
-        contexts = self.textViewer
-        if contexts.isHidden() :
+        textViewer = self.textViewer
+        if textViewer.isHidden() :
             return
         else :
             pass
         limit = 5
+        contexts = list()
         textLines = list()
         corpuses = glob(''.join([self.corpusDir, '/*']))
         self.debug('Found corpuses : {}.'.format(corpuses))
-        contexts.clear()
+        textViewer.clear()
         for corpus in corpuses :
             textLines.append(locateWord(corpus, word))
         for textLine in textLines :
@@ -235,9 +309,11 @@ class VocDialog(QDialog) :
                     context = context.replace('\n', ' ')
                     context = context.replace(self.MAGICWORD, '\n\n')
                     contexts.append(''.join([title, '\n', context, '\n\n']))
-            else :
-                contexts.append('Sorry, {} found.'.format(word))
-        contexts.find(word)
+        if contexts :
+            for context in contexts :
+                textViewer.append(context)
+        else :
+            textViewer.append('Sorry, {} not found.'.format(word))
         self.info('Word found and showed in the textViewer.')
 
     def wordCount(self, word=None) :
@@ -281,6 +357,7 @@ class VocDialog(QDialog) :
             showMessage('Are you sure?', 3000)
         elif candidates[0] != word : # Can be corrected.
             self.countWord[0] += 1
+            self.candidates = candidates
             msg = 'Do you mean {} ?'.format(' ,'.join(candidates))
             showMessage(msg, 5000)
         else : # Collected in the wordModel.
