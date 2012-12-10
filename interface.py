@@ -7,7 +7,7 @@ This is the interface of the VocVoc.
 from PyQt4.QtGui import QDialog, QPushButton, QListWidget, QLineEdit,\
         QStatusBar, QLabel, QVBoxLayout, QHBoxLayout, QFileDialog,\
         QListWidgetItem, QTextEdit, QMessageBox, QApplication
-from PyQt4.QtCore import QFile, Qt, pyqtSignal
+from PyQt4.QtCore import QFile, Qt, pyqtSignal, QSettings
 from PyQt4.phonon import Phonon
 
 # re
@@ -104,13 +104,23 @@ class VocDialog(QDialog) :
         self.mediaObeject = Phonon.createPlayer(Phonon.MusicCategory, Phonon.MediaSource(''))
         self.setupUi()
         self.connect()
+        self.readSettings()
         self.initCountWord()
+        self.readFile()
         self.candidates = None
         self.autoProxy = autoProxy
         self.spellChecker = SpellChecker()
         self.correct = self.spellChecker.correct
         self.corpusDir = self.spellChecker.corpusDir
         self.info('VocDialog started.')
+
+    def closeEvent(self, event) :
+        if True :
+            self.warn('Exiting and saving the settings.')
+            self.saveSettings()
+            event.accept()
+        else :
+            event.reject()
 
     def keyPressEvent(self, event) :
         self.debug('Key is {}.'.format(event.key()))
@@ -119,6 +129,17 @@ class VocDialog(QDialog) :
     def resizeEvent(self, event) :
         self.debug("Resized to {}.".format(self.size()))
         super(VocDialog, self).resizeEvent(event)
+
+    def readSettings(self) :
+        settings = QSettings(r"TheDevil's World", r"TheDevil's VocVoc")
+        lastFilePath = settings.value('lastFilePath', '')
+        self.info('Reading {} as the filePath.'.format(lastFilePath))
+        self.filePath = lastFilePath
+
+    def saveSettings(self) :
+        settings = QSettings(r"TheDevil's World", r"TheDevil's VocVoc")
+        self.info('Saving {} as the filePath.'.format(self.filePath))
+        settings.setValue('lastFilePath', self.filePath)
 
     def initCountWord(self) :
         """
@@ -185,6 +206,8 @@ class VocDialog(QDialog) :
     def connect(self) :
         "Connect signals and slots in the UI."
         self.info('Connecting signals and slots.')
+        self.accepted.connect(self.saveSettings)
+        self.rejected.connect(self.saveSettings)
         self.loadButton.clicked.connect(self.loadFile)
         self.inputLine.returnPressed.connect(self.enteredText)
         self.inputLine.ctrlN.connect(self.completeHandler)
@@ -415,6 +438,42 @@ class VocDialog(QDialog) :
 
         self.info('Text added.')
 
+    def readFile(self) :
+        filePath = self.filePath
+        debug = self.debug
+        textList = self.textList
+        # Create or read file.
+        fileName = basename(filePath)
+        try :
+            with open(filePath, 'r+') as textFile :
+                debug('File exists, openning up.')
+                writenText = textFile.read()
+            writenText = writenText.splitlines()
+            textList.clear()
+            textList.addItems( writenText )
+            if not 'end' in writenText[-1].strip().lower() :
+                textList.setCurrentRow( len(writenText)-1 )
+            else :
+                textList.setCurrentRow( 0 )
+            debug('Added items to list and set current row to the last row.')
+        except IOError as error : # File does not exist. We create one.
+            debug('File does not exist. Trying to find the dight in the name.')
+            listNumber = self.findDight.search(fileName)
+            if listNumber is None : # No number found in the text.
+                self.warn('Dight not found in the filename. Try again.')
+                msg = 'No number found in the file name.\nPlease try again.'
+                QMessageBox.warning(self, 'List number NOT found.',
+                        msg,
+                        QMessageBox.Ok)
+                return msg
+            else : # No existing file but found the number in the file name.
+                debug('Dight Found. Creating file and adding first line.')
+                with open(filePath, 'x') as textFile :
+                    firstLine = ''.join( ['# list ' ,str( listNumber.group() )] ) # Cannot put '\n' here.
+                    textFile.write( ''.join([firstLine ,'\n']) )
+                textList.clear()
+                textList.addItem(firstLine) # Otherwise there would be a new line in the list.
+
     def loadFile(self) :
         "Open the file dialog to select the file and try to start."
         # Open the file dialog.
@@ -426,48 +485,19 @@ class VocDialog(QDialog) :
         if ( self.fileDialog.exec() ) :
             debug('Dialog executed sucessfully.')
             filePath = self.fileDialog.selectedFiles()[0]
-            fileName = basename(filePath)
-            # Create or read file.
-            try :
-                with open(filePath, 'r+') as textFile :
-                    debug('File exists, openning up.')
-                    writenText = textFile.read()
-                writenText = writenText.splitlines()
-                textList.clear()
-                textList.addItems( writenText )
-                if not 'end' in writenText[-1].strip().lower() :
-                    textList.setCurrentRow( len(writenText)-1 )
-                else :
-                    textList.setCurrentRow( 0 )
-                debug('Added items to list and set current row to the last row.')
-            except IOError as error : # File does not exist. We create one.
-                debug('File does not exist. Trying to find the dight in the name.')
-                listNumber = self.findDight.search(fileName)
-                if listNumber is None : # No number found in the text.
-                    logger.warn('Dight not found in the filename. Try again.')
-                    msg = 'No number found in the file name.\nPlease try again.'
-                    QMessageBox.warning(self, 'List number NOT found.',
-                            msg,
-                            QMessageBox.Ok)
-                    return msg
-                else : # No existing file but found the number in the file name.
-                    debug('Dight Found. Creating file and adding first line.')
-                    with open(filePath, 'x') as textFile :
-                        firstLine = ''.join( ['# list ' ,str( listNumber.group() )] ) # Cannot put '\n' here.
-                        textFile.write( ''.join([firstLine ,'\n']) )
-                    textList.clear()
-                    textList.addItem(firstLine) # Otherwise there would be a new line in the list.
-
-            debug('Set inputLine to write-enabled.')
-            self.inputLine.setReadOnly(False)
-            debug('Pass textFile to the dialog')
             self.filePath = filePath
+
+            self.readFile()
+
+            debug('Pass textFile to the dialog')
             info('File loaded.')
 
 
 def App(autoProxy=False) :
     from sys import argv, exit
     app = QApplication(argv)
+    app.setOrganizationName(r"TheDevil's World")
+    app.setOrganizationDomain(r"TheDevilsWorld.com")
     app.setApplicationName(r"TheDevil's VocVoc")
     dialog = VocDialog(autoProxy=autoProxy)
     dialog.show()
