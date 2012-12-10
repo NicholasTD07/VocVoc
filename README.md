@@ -46,7 +46,9 @@ TODO
 * ✓ check the spelling of the input.
 * ✓ take text file `filename.txt` to generate a vocabulary model and save the model in `VocVoc/pickles/`.
 * ✓ play the pronunciation of the word(using google's pronunciations).
-*   take text files in `VocVoc/corpuses` and automatically train the model and save that.
+* ✓ take text files in `VocVoc/corpuses` and automatically train the model and save that.
+* ✓ find the word in all the corpuses inside the `VocVoc/corpuses` folder.
+* ✓ able to use CtrlN and CtrlP to selete the canditates shown in the `Do you mean` tip.
 *   find the word in certain websites' pages and present the context.
 
 License
