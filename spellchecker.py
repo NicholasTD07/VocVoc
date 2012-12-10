@@ -111,7 +111,7 @@ class SpellChecker:
             with open(path, 'rb') as f :
                 loadedWordModel = load(f)
             self.wordModel.update(loadedWordModel)
-            msg = 'Model loaded.'.format(fileName)
+            msg = '{} loaded.'.format(fileName)
             self.info(msg)
         except Exception as error :
             self.warn('An error occured while loading: {}.'.format(repr(error)))

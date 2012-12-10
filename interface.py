@@ -212,21 +212,31 @@ class VocDialog(QDialog) :
             self.info(msg)
 
     def itemActivated(self, item) :
+        self.info('Item Activated!')
         row = self.textList.row(item)
         text = item.text()
         if not text.startswith('#') :
             self.pronounce(item.text())
             self.findWord(text)
+        elif 'end' in text.strip().lower() :
+            self.play('end.mp3')
+        else :
+            self.play('beep.mp3')
         if row+1 != self.textList.count() :
             self.debug('NOT last row!')
             self.textList.setCurrentRow(row+1)
         else :
             self.debug('Last row!')
+        self.info('Processed the activated item.')
 
     def toggleViewer(self) :
         if self.textViewer.isHidden() :
             self.resize(700, 500)
             self.textViewer.show()
+            self.textViewer.clear()
+            text = self.textList.currentItem().text()
+            if not text.startswith('#') :
+                self.findWord(text)
         else :
             self.textViewer.hide()
             self.resize(350, 500)
@@ -396,7 +406,7 @@ class VocDialog(QDialog) :
 
     def enteredText(self) :
         "Get the text from the input line and add it to the file and the list."
-        self.info('Adding text to textList and the file.')
+        self.info('Adding text to textList and the file!')
         textList = self.textList
         text = self.inputLine.text().strip().lower()
         self.debug( 'Input is {}.'.format(text) )
