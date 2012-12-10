@@ -50,16 +50,19 @@ class SpellChecker:
     def __init__(self, wordFile=None) :
         self.logger = getLogger('VocVoc.SpellChecker')
         self.info = self.logger.info
+        self.debug = self.logger.debug
         self.warn = self.logger.warn
         self.info('Initializing SpellChecker.')
         self.wordModel = WordModel()
         self.loadConfig()
+        self.autoTrain()
         self.loadModels()
         msg = 'SpellChecker Initialized with {} words collected.'.format(len(self.wordModel))
-        self.info(msg)
+        self.debug(msg)
 
     def loadConfig(self) :
         info = self.info
+        debug = self.debug
         info('Start to get config from config.ini')
         config = Config()
         pickleDir = config.pickleDir
@@ -67,22 +70,23 @@ class SpellChecker:
         corpusDir = config.corpusDir
         corpusDirName = config.corpusDirName
         if pickleDir :
-            info('PickleDir Found in config.ini.')
+            debug('PickleDir Found in config.ini.')
             self.pickleDir = pickleDir
         else :
-            info('PickleDir NOT Found in config.ini.')
+            debug('PickleDir NOT Found in config.ini.')
             self.pickleDir = pJoin(__dir__, pickleDirName)
         if corpusDir :
-            info('CorpusDir Found in config.ini.')
+            debug('CorpusDir Found in config.ini.')
             self.corpusDir = corpusDir
         else :
-            info('CorpusDir NOT Found in config.ini.')
+            debug('CorpusDir NOT Found in config.ini.')
             self.corpusDir = pJoin(__dir__, corpusDirName)
-        info("""Config listed below:
+        debug("""Config listed below:
                 pickleDir : {},
                 corpusDir : {}
                 """.format(self.pickleDir, self.corpusDir)
                 )
+        info('Config got from config file config.ini.')
 
     def saveModel(self, wordModel, fileName) :
         msg = 'Going to save the model as {} in {}.'.format(fileName, self.pickleDir)
@@ -90,7 +94,7 @@ class SpellChecker:
         try :
             pickles = pJoin(self.pickleDir, '*')
             for fileNames in glob(pickles) :
-                if fileName in fileName :
+                if fileName in fileNames :
                     raise FileExistsError('Pickle file alreald exists.')
             with open(pJoin(self.pickleDir, fileName), 'wb') as f :
                 dump(wordModel, f)
@@ -99,14 +103,15 @@ class SpellChecker:
             self.warn('Saing aborted because of {}.'.format(repr(error)))
 
     def loadModel(self, fileName) :
-        msg = 'Going to load the {} model from {}.'.format(fileName, self.pickleDir)
+        #msg = 'Going to load the {} model from {}.'.format(fileName, self.pickleDir)
+        msg = 'Going to load the {} model.'.format(fileName, self.pickleDir)
         self.info(msg)
         try :
             path = pJoin(self.pickleDir, fileName)
             with open(path, 'rb') as f :
                 loadedWordModel = load(f)
             self.wordModel.update(loadedWordModel)
-            msg = 'Model in {} loaded into the SpellChecker.wordModel.'.format(fileName)
+            msg = 'Model loaded.'.format(fileName)
             self.info(msg)
         except Exception as error :
             self.warn('An error occured while loading: {}.'.format(repr(error)))
@@ -138,12 +143,13 @@ class SpellChecker:
         self.info( 'WordModel trained in {}s.'.format(time()-begin) )
         return wordModel
 
-    def trainAndSave(self, corpusFileName) :
-        corpusPath = pJoin(self.corpusDir, corpusFileName)
+    def trainAndSave(self, corpusPath) :
+        #corpusPath = pJoin(self.corpusDir, corpusFileName)
         msg = 'Train and save the wordModel from corpus file :{}'.format(corpusPath)
         self.info(msg)
         try :
             with open(corpusPath) as corpusFile :
+                corpusFileName = basename(corpusPath)
                 wordModel = self.trainModel(corpusFile)
                 pickleFileName = corpusFileName.replace('txt', 'pickle')
                 self.saveModel(wordModel, pickleFileName)
@@ -151,6 +157,21 @@ class SpellChecker:
         except Exception as error :
             msg ='An error occured when training and saving the wordModel : {}.'.format(repr(error))
             self.warn(msg)
+
+    def goPickle(self, text,forward=True) :
+        pickle = pJoin(self.pickleDir, basename(text).replace('txt', 'pickle'))
+        return pickle
+
+    def autoTrain(self) :
+        msg = 'Going to automatically train the untrained pickles.'
+        self.info(msg)
+        pickles = glob(pJoin(self.pickleDir, '*'))
+        corpuses = glob(pJoin(self.corpusDir, '*'))
+        notTrained = [ c for c in corpuses if self.goPickle(c) not in pickles ]
+        self.debug(notTrained)
+        for pickle in notTrained :
+            self.trainAndSave(pickle)
+        self.info('Trained and saved the pickles.')
 
     def editD1(self, word) : # D1 for Distance = 1
         self.info('Generating one-distance spell errors.')
@@ -188,7 +209,6 @@ class SpellChecker:
         candidates = self.known( [word] ) or \
                 self.known( self.editD1(word) ) or \
                 self.known( self.editD2(word) )
-                #self.known( self.editD2(word) ) or [word]
         if candidates is not None :
             self.info( '{} correct candidates generated in {}s.'.format(len(candidates), time()-begin) )
             # return a sorted list with decending order.

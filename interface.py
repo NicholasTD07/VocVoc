@@ -5,9 +5,9 @@ This is the interface of the VocVoc.
 
 # PyQt4
 from PyQt4.QtGui import QDialog, QPushButton, QListWidget, QLineEdit,\
-        QStatusBar, QLabel, QVBoxLayout, QFileDialog, QListWidgetItem,\
-        QMessageBox, QApplication
-from PyQt4.QtCore import QFile, Qt
+        QStatusBar, QLabel, QVBoxLayout, QHBoxLayout, QFileDialog,\
+        QListWidgetItem, QTextEdit, QMessageBox, QApplication
+from PyQt4.QtCore import QFile, Qt, pyqtSignal
 from PyQt4.phonon import Phonon
 
 # re
@@ -26,6 +26,8 @@ from tempfile import NamedTemporaryFile
 from urllib.request import urlopen
 from urllib.error import HTTPError
 
+# glob
+from glob import glob
 # config
 from config import __dir__
 
@@ -37,6 +39,48 @@ from misc import *
 
 
 __all__ = ['VocDialog', 'App']
+
+
+class tabEnabledLineEdit(QLineEdit) :
+
+    keyCode = { 16777249: 'Ctrl',
+                78 : 'n',
+                80 : 'p'
+                }
+
+    ctrlN = pyqtSignal()
+    ctrlP = pyqtSignal()
+                
+    def __init__(self, parent=None) :
+        self.logger = getLogger('VocVoc.VocDialog.lineEdit')
+        self.info = self.logger.info
+        self.debug = self.logger.debug
+        self.keys = list()
+        super(tabEnabledLineEdit, self).__init__(parent)
+
+    def keyPressEvent(self, event) :
+        keys = self.keys
+        keyCode = self.keyCode
+        key = event.key()
+        if key in keyCode.keys() :
+            keys.append(keyCode[key])
+        self.debug('Key pressed : {}.'.format(key))
+        if 'Ctrl' in keys :
+            if 'n' in keys :
+                self.ctrlN.emit()
+                self.debug('Ctrl and n pressed.')
+            elif 'p' in keys :
+                self.ctrlP.emit()
+                self.debug('Ctrl and p pressed.')
+        super(tabEnabledLineEdit, self).keyPressEvent(event)
+
+    def keyReleaseEvent(self, event) :
+        key = event.key()
+        keyCode = self.keyCode
+        if key in keyCode.keys() :
+            self.keys.remove(keyCode[key])
+        self.debug('Key released : {}.'.format(key))
+        super(tabEnabledLineEdit, self).keyReleaseEvent(event)
 
 
 class VocDialog(QDialog) :
@@ -52,6 +96,7 @@ class VocDialog(QDialog) :
         self.logger = getLogger('VocVoc.VocDialog')
         self.info = self.logger.info
         self.warn = self.logger.warn
+        self.debug = self.logger.debug
         if autoProxy :
             self.info('Starting VocDialog with autoProxy.')
         else :
@@ -59,11 +104,21 @@ class VocDialog(QDialog) :
         self.mediaObeject = Phonon.createPlayer(Phonon.MusicCategory, Phonon.MediaSource(''))
         self.setupUi()
         self.connect()
+        self.initCountWord()
+        self.candidates = None
         self.autoProxy = autoProxy
         self.spellChecker = SpellChecker()
         self.correct = self.spellChecker.correct
-        self.initCountWord()
+        self.corpusDir = self.spellChecker.corpusDir
         self.info('VocDialog started.')
+
+    def keyPressEvent(self, event) :
+        self.debug('Key is {}.'.format(event.key()))
+        super(VocDialog, self).keyPressEvent(event)
+
+    def resizeEvent(self, event) :
+        self.debug("Resized to {}.".format(self.size()))
+        super(VocDialog, self).resizeEvent(event)
 
     def initCountWord(self) :
         """
@@ -80,23 +135,50 @@ class VocDialog(QDialog) :
         self.fileDialog.setFileMode(QFileDialog.AnyFile)
         self.fileDialog.setViewMode(QFileDialog.Detail)
 
-        self.loadButton = QPushButton( r"Open\New :", self)
+        self.loadButton = QPushButton( r'Open/New :', self)
         self.loadButton.setAutoDefault(False)
 
         self.textList = QListWidget(self)
 
-        self.inputLine = QLineEdit(self)
+        self.inputLine = tabEnabledLineEdit(self)
+
+        self.toggleButton = QPushButton(r'Show/Hide', self)
+        self.toggleButton.setAutoDefault(False)
+        self.toggleButton.setCheckable(True)
+
+        self.textLabel = QLabel()
+
+        self.hBox = QHBoxLayout()
+        self.hBox.addWidget(self.inputLine)
+        self.hBox.addWidget(self.toggleButton)
 
         self.statusBar = QStatusBar(self)
         msg = 'Hello World! I love YOU!!!'
         self.statusBar.showMessage(msg, 5000)
 
-        VBox = QVBoxLayout()
-        for item in [self.loadButton, self.textList, self.inputLine, self.statusBar] :
-            VBox.addWidget(item)
+        vBox = QVBoxLayout()
+        items = [self.loadButton, self.textList, self.hBox, self.statusBar]
+        for item in items :
+            try :
+                vBox.addWidget(item)
+            except :
+                vBox.addLayout(item)
 
-        self.setLayout(VBox)
-        self.resize(500, 450)
+        self.textViewer = QTextEdit()
+        self.textViewer.setHidden(True)
+        self.textViewer.setReadOnly(True)
+
+        HBox = QHBoxLayout()
+
+        items = [vBox, self.textViewer]
+        for item in items :
+            try :
+                HBox.addWidget(item)
+            except :
+                HBox.addLayout(item)
+                
+        self.setLayout(HBox)
+        self.resize(350, 500)
         self.setWindowTitle("VocVoc -- Your Vocabulary Helper")
         self.info('UI is set up now.')
 
@@ -104,8 +186,11 @@ class VocDialog(QDialog) :
         "Connect signals and slots in the UI."
         self.info('Connecting signals and slots.')
         self.loadButton.clicked.connect(self.loadFile)
-        self.inputLine.returnPressed.connect(self.addText)
+        self.inputLine.returnPressed.connect(self.enteredText)
+        self.inputLine.ctrlN.connect(self.completeHandler)
+        self.inputLine.ctrlP.connect(lambda : self.completeHandler(False))
         self.textList.itemActivated.connect(self.itemActivated)
+        self.toggleButton.clicked.connect(self.toggleViewer)
         if self.logger.isEnabledFor(DEBUG) :
             self.mediaObeject.stateChanged.connect( self.errorState )
         self.info('Signals and slots connected.')
@@ -131,7 +216,48 @@ class VocDialog(QDialog) :
         text = item.text()
         if not text.startswith('#') :
             self.pronounce(item.text())
-        self.textList.setCurrentRow(row+1)
+            self.findWord(text)
+        if row+1 != self.textList.count() :
+            self.debug('NOT last row!')
+            self.textList.setCurrentRow(row+1)
+        else :
+            self.debug('Last row!')
+
+    def toggleViewer(self) :
+        if self.textViewer.isHidden() :
+            self.resize(700, 500)
+            self.textViewer.show()
+        else :
+            self.textViewer.hide()
+            self.resize(350, 500)
+
+    def backAndForward(self, forward=True) :
+        inputLine = self.inputLine
+        word = inputLine.text()
+        setText = inputLine.setText
+        candidates = self.candidates
+        count = len(candidates)
+        try :
+            position = candidates.index(word)
+            self.debug('Position found.')
+        except :
+            position = None
+            self.debug('Position not found.')
+        if forward :
+            if position is None or position == count - 1 : # At end
+                position = -1
+            setText( candidates[position+1] )
+        else :
+            if position is None or position == 0 :
+                position = count
+            setText( candidates[position-1] )
+
+    def completeHandler(self, goNext=True) :
+        inputLine = self.inputLine
+        candidates = self.candidates
+        word = inputLine.text()
+        if candidates :
+            self.backAndForward(goNext)
 
     def play(self, path) :
         self.mediaObeject.setCurrentSource(Phonon.MediaSource(path))
@@ -141,7 +267,7 @@ class VocDialog(QDialog) :
         self.info('Preparing the url to pronounce.')
         url = self.baseURL.replace(self.MAGICWORD, word)
         if not self.autoProxy :
-            self.info('Without the autoProxy, play it using the url as the source.')
+            self.debug('Without the autoProxy, play it using the url as the source.')
             self.play(url)
         else :
             self.info('With the autoProxy, play it after downloading the file.')
@@ -154,6 +280,41 @@ class VocDialog(QDialog) :
                 self.warn(repr(error))
                 self.warn('Pronounciation FAILED.')
         self.info('Pronounciation ended.')
+
+    def findWord(self, word) :
+        self.info('Finding word in the text file.')
+        textViewer = self.textViewer
+        if textViewer.isHidden() :
+            return
+        else :
+            pass
+        limit = 5
+        contexts = list()
+        textLines = list()
+        corpuses = glob(''.join([self.corpusDir, '/*']))
+        self.debug('Found corpuses : {}.'.format(corpuses))
+        textViewer.clear()
+        for corpus in corpuses :
+            textLines.append(locateWord(corpus, word))
+        for textLine in textLines :
+            text, lines = textLine[0], textLine[1]
+            title = ''.join( ['Title : ', basename(text[-1])] )
+            if lines :
+                for line in lines :
+                    wantedLines = text[line-limit: line+limit]
+                    #cleanLines = map(self.replace, wantedLines)
+                    context = ''.join(wantedLines)
+                    context = context.replace(word, ' '.join(['*', word, '*']))
+                    context = context.replace('\n\n', self.MAGICWORD)
+                    context = context.replace('\n', ' ')
+                    context = context.replace(self.MAGICWORD, '\n\n')
+                    contexts.append(''.join([title, '\n', context, '\n\n']))
+        if contexts :
+            for context in contexts :
+                textViewer.append(context)
+        else :
+            textViewer.append('Sorry, {} not found.'.format(word))
+        self.info('Word found and showed in the textViewer.')
 
     def wordCount(self, word=None) :
         """
@@ -168,13 +329,13 @@ class VocDialog(QDialog) :
             return True
         elif self.countWord[0] == 1 :
             msg = 'Maybe the word is WRONG? Playing beep and saving the word.'
-            self.info(msg)
+            self.debug(msg)
             self.countWord[1] = word
             self.play('beep.mp3')
             return False
         elif self.countWord[0] == 2 :
             if word != self.countWord[1] : # Different word.
-                self.logger.debug('DIFFRENT WORD.')
+                self.debug('DIFEFRENT WORD.')
                 self.countWord[0] = 1 # Check again.
                 self.countWord[1] = word # Update it.
                 self.play('beep.mp3')
@@ -196,11 +357,13 @@ class VocDialog(QDialog) :
             showMessage('Are you sure?', 3000)
         elif candidates[0] != word : # Can be corrected.
             self.countWord[0] += 1
+            self.candidates = candidates
             msg = 'Do you mean {} ?'.format(' ,'.join(candidates))
             showMessage(msg, 5000)
         else : # Collected in the wordModel.
-            self.info('Word collected in the wordModel.')
+            self.findWord(word)
             self.countWord[0] = 0
+            self.debug('Word collected in the wordModel.')
             return True
 
         msg = 'wrongTime = {} with the word {}.'.format(self.countWord[0], word)
@@ -208,12 +371,9 @@ class VocDialog(QDialog) :
 
         return self.wordCount(word)
 
-    def addText(self) :
-        "Get the text from the input line and add it to the file and the list."
-        self.info('Adding text to textList and the file.')
+    def addText(self, text) :
+        self.info('Starting to add text.')
         textList = self.textList
-        text = self.inputLine.text().strip().lower()
-        self.info( 'Input is {}.'.format(text) )
 
         if text.startswith('#') : # It is a comment.
             pass
@@ -231,32 +391,47 @@ class VocDialog(QDialog) :
         try : # With the try statement, it can be used as a pronunciation helper.
             flush(self.filePath, text)
         except Exception :
-            self.info('Using this freely without writing to a file as a pronunciation helper.')
+            self.debug('Using this freely without writing to a file as a pronunciation helper.')
+        self.info('Text added.')
+
+    def enteredText(self) :
+        "Get the text from the input line and add it to the file and the list."
+        self.info('Adding text to textList and the file.')
+        textList = self.textList
+        text = self.inputLine.text().strip().lower()
+        self.debug( 'Input is {}.'.format(text) )
+
+        self.addText(text)
+
+        self.info('Text added.')
 
     def loadFile(self) :
         "Open the file dialog to select the file and try to start."
         # Open the file dialog.
         logger = getLogger('VocVoc.VocDialog.loadFile')
         info = logger.info
-        info('Preparing to load file.')
+        debug = logger.debug
+        debug('Preparing to load file.')
         textList = self.textList
         if ( self.fileDialog.exec() ) :
-            info('Dialog executed sucessfully.')
+            debug('Dialog executed sucessfully.')
             filePath = self.fileDialog.selectedFiles()[0]
             fileName = basename(filePath)
             # Create or read file.
             try :
                 with open(filePath, 'r+') as textFile :
-                    info('File exists, openning up.')
+                    debug('File exists, openning up.')
                     writenText = textFile.read()
                 writenText = writenText.splitlines()
                 textList.clear()
                 textList.addItems( writenText )
                 if not 'end' in writenText[-1].strip().lower() :
                     textList.setCurrentRow( len(writenText)-1 )
-                info('Added items to list and set current row to the last row.')
+                else :
+                    textList.setCurrentRow( 0 )
+                debug('Added items to list and set current row to the last row.')
             except IOError as error : # File does not exist. We create one.
-                info('File does not exist. Trying to find the dight in the name.')
+                debug('File does not exist. Trying to find the dight in the name.')
                 listNumber = self.findDight.search(fileName)
                 if listNumber is None : # No number found in the text.
                     logger.warn('Dight not found in the filename. Try again.')
@@ -266,17 +441,18 @@ class VocDialog(QDialog) :
                             QMessageBox.Ok)
                     return msg
                 else : # No existing file but found the number in the file name.
-                    info('Dight Found. Creating file and adding first line.')
+                    debug('Dight Found. Creating file and adding first line.')
                     with open(filePath, 'x') as textFile :
                         firstLine = ''.join( ['# list ' ,str( listNumber.group() )] ) # Cannot put '\n' here.
                         textFile.write( ''.join([firstLine ,'\n']) )
                     textList.clear()
                     textList.addItem(firstLine) # Otherwise there would be a new line in the list.
 
-            info('Set inputLine to write-enabled.')
+            debug('Set inputLine to write-enabled.')
             self.inputLine.setReadOnly(False)
-            info('Pass textFile to the dialog')
+            debug('Pass textFile to the dialog')
             self.filePath = filePath
+            info('File loaded.')
 
 
 def App(autoProxy=False) :
