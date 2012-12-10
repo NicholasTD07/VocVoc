@@ -107,6 +107,7 @@ class VocDialog(QDialog) :
         self.readSettings()
         self.initCountWord()
         self.readFile()
+        self.textList.setCurrentRow(self.lastRow)
         self.candidates = None
         self.autoProxy = autoProxy
         self.spellChecker = SpellChecker()
@@ -133,6 +134,7 @@ class VocDialog(QDialog) :
     def readSettings(self) :
         settings = QSettings(r"TheDevil's World", r"TheDevil's VocVoc")
         lastFilePath = settings.value('lastFilePath', '')
+        self.lastRow = int(settings.value('row', 0))
         self.info('Reading {} as the filePath.'.format(lastFilePath))
         self.filePath = lastFilePath
 
@@ -140,6 +142,7 @@ class VocDialog(QDialog) :
         settings = QSettings(r"TheDevil's World", r"TheDevil's VocVoc")
         self.info('Saving {} as the filePath.'.format(self.filePath))
         settings.setValue('lastFilePath', self.filePath)
+        settings.setValue('row', self.textList.currentRow())
 
     def initCountWord(self) :
         """
