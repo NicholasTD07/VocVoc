@@ -21,7 +21,7 @@ from spellchecker import WordModel
 # This is the KEY to solve the AttributeError when importing.
 
 
-__version__ = 'v0.0.3'
+__version__ = 'v0.0.4'
 
 
 def getLogger(DEBUG=False) :
