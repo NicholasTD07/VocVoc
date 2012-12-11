@@ -35,6 +35,7 @@ ShortCut
 * 1. Enter : Read the word and go to the next one in the list.
 * 2. J : The same as Enter.
 * 3. K : Almost the same as J, and Enter, but go backward(upward) in the list.
+* 4. T : Toggle the textViewer and find the text in text files under `corpuses` folder.
 
 ### InputLine ###
 

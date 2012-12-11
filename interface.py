@@ -92,11 +92,17 @@ class keyEnabledListWidget(QListWidget) :
     keyCode = { 74: 'j',
                 'j': 74,
                 75: 'k',
-                'k': 75
+                'k': 75,
+                84: 't',
+                't': 84
                 }
 
+    # I can, however, use only one signal, say, keyPressed(str).
+    # But I will need to add more code,for example a function into interface.
+    # Since there are only 3 signals now, I will just levea them like this.
     jPressed = pyqtSignal()
     kPressed = pyqtSignal()
+    tPressed = pyqtSignal()
 
     def keyPressEvent(self, event) :
         key = event.key()
@@ -106,6 +112,8 @@ class keyEnabledListWidget(QListWidget) :
                 self.jPressed.emit()
             elif key == keyCode['k'] :
                 self.kPressed.emit()
+            elif key == keyCode['t'] :
+                self.tPressed.emit()
         super(keyEnabledListWidget, self).keyPressEvent(event)
 
 
@@ -243,6 +251,7 @@ class VocDialog(QDialog) :
         self.inputLine.ctrlP.connect(lambda : self.completeHandler(False))
         self.textList.jPressed.connect(self.itemActivated)
         self.textList.kPressed.connect(lambda : self.itemActivated(False))
+        self.textList.tPressed.connect(self.toggleViewer)
         self.textList.itemActivated.connect(self.itemActivated)
         self.toggleButton.clicked.connect(self.toggleViewer)
         if self.logger.isEnabledFor(DEBUG) :
