@@ -265,6 +265,7 @@ class VocDialog(QDialog) :
                 self.findWord(text)
         else :
             self.textViewer.hide()
+            self.textList.setFocus()
             self.resize(350, 500)
 
     def backAndForward(self, forward=True) :
