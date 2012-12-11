@@ -22,6 +22,25 @@ you need to have [Python3][] and [PyQt][].
 If you use linux, say Arch, please install Python3 and PyQt with pacman command.
 If you use Windows, see Download below.
 
+Usage
+-----
+
+Not yet.
+
+ShortCut
+--------
+
+### TextList ###
+
+* 1. Enter : Read the word and go to the next one in the list.
+* 2. J : The same as Enter.
+* 3. K : Almost the same as J, and Enter, but go backward(upward) in the list.
+
+### InputLine ###
+
+* 1. CtrlN : If the `Do you mean` spelling tip is there, you can go through the candidates in the tip with CtrlN(forward).
+* 2. CtrlP : Almost the same as CtrlN, but in another direction which is backward.
+
 Download
 --------
 
