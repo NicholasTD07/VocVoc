@@ -43,6 +43,8 @@ __all__ = ['VocDialog', 'App']
 
 class tabEnabledLineEdit(QLineEdit) :
 
+    "Redefined to enable the CtrlN/P complete function."
+
     keyCode = { 16777249: 'Ctrl',
                 78 : 'n',
                 80 : 'p'
@@ -81,6 +83,30 @@ class tabEnabledLineEdit(QLineEdit) :
             self.keys.remove(keyCode[key])
         self.debug('Key released : {}.'.format(key))
         super(tabEnabledLineEdit, self).keyReleaseEvent(event)
+
+
+class keyEnabledListWidget(QListWidget) :
+
+    "Redefined to enable key control ability."
+
+    keyCode = { 74: 'j',
+                'j': 74,
+                75: 'k',
+                'k': 75
+                }
+
+    jPressed = pyqtSignal()
+    kPressed = pyqtSignal()
+
+    def keyPressEvent(self, event) :
+        key = event.key()
+        keyCode = self.keyCode
+        if key in keyCode :
+            if key == keyCode['j'] :
+                self.jPressed.emit()
+            elif key == keyCode['k'] :
+                self.kPressed.emit()
+        super(keyEnabledListWidget, self).keyPressEvent(event)
 
 
 class VocDialog(QDialog) :
@@ -162,7 +188,7 @@ class VocDialog(QDialog) :
         self.loadButton = QPushButton( r'Open/New :', self)
         self.loadButton.setAutoDefault(False)
 
-        self.textList = QListWidget(self)
+        self.textList = keyEnabledListWidget(self)
 
         self.inputLine = tabEnabledLineEdit(self)
 
@@ -215,6 +241,8 @@ class VocDialog(QDialog) :
         self.inputLine.returnPressed.connect(self.enteredText)
         self.inputLine.ctrlN.connect(self.completeHandler)
         self.inputLine.ctrlP.connect(lambda : self.completeHandler(False))
+        self.textList.jPressed.connect(self.itemActivated)
+        self.textList.kPressed.connect(lambda : self.itemActivated(False))
         self.textList.itemActivated.connect(self.itemActivated)
         self.toggleButton.clicked.connect(self.toggleViewer)
         if self.logger.isEnabledFor(DEBUG) :
@@ -237,8 +265,9 @@ class VocDialog(QDialog) :
         else :
             self.info(msg)
 
-    def itemActivated(self, item) :
+    def itemActivated(self, forward=True) :
         self.info('Item Activated!')
+        item = self.textList.currentItem()
         row = self.textList.row(item)
         text = item.text()
         if not text.startswith('#') :
@@ -250,7 +279,8 @@ class VocDialog(QDialog) :
             self.play('beep.mp3')
         if row+1 != self.textList.count() :
             self.debug('NOT last row!')
-            self.textList.setCurrentRow(row+1)
+            i = 1 if forward else -1
+            self.textList.setCurrentRow(row+i)
         else :
             self.debug('Last row!')
         self.info('Processed the activated item.')
