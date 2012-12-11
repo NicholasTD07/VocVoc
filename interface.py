@@ -296,6 +296,7 @@ class VocDialog(QDialog) :
 
     def toggleViewer(self) :
         if self.textViewer.isHidden() :
+            self.toggleButton.setChecked(True)
             self.resize(700, 500)
             self.textViewer.show()
             self.textViewer.clear()
@@ -303,6 +304,7 @@ class VocDialog(QDialog) :
             if not text.startswith('#') :
                 self.findWord(text)
         else :
+            self.toggleButton.setChecked(False)
             self.textViewer.hide()
             self.textList.setFocus()
             self.resize(350, 500)
