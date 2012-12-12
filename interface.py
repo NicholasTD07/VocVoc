@@ -4,9 +4,9 @@ This is the interface of the VocVoc.
 """
 
 # PyQt4
-from PyQt4.QtGui import QDialog, QPushButton, QListWidget, QLineEdit,\
-        QStatusBar, QLabel, QVBoxLayout, QHBoxLayout, QFileDialog,\
-        QListWidgetItem, QTextEdit, QMessageBox, QApplication
+from PyQt4.QtGui import QDialog, QPushButton, QListWidget, QLineEdit, QStatusBar,\
+        QLabel, QVBoxLayout, QHBoxLayout, QFileDialog, QListWidgetItem, QTextEdit,\
+        QMessageBox, QApplication, QMenu
 from PyQt4.QtCore import QFile, Qt, pyqtSignal, QSettings
 from PyQt4.phonon import Phonon
 
@@ -103,6 +103,7 @@ class keyEnabledListWidget(QListWidget) :
     jPressed = pyqtSignal()
     kPressed = pyqtSignal()
     tPressed = pyqtSignal()
+    changeText = pyqtSignal()
 
     def keyPressEvent(self, event) :
         key = event.key()
@@ -115,6 +116,12 @@ class keyEnabledListWidget(QListWidget) :
             elif key == keyCode['t'] :
                 self.tPressed.emit()
         super(keyEnabledListWidget, self).keyPressEvent(event)
+
+    def contextMenuEvent(self, event) :
+        menu = QMenu()
+        pos = event.globalPos()
+        menu.addAction('Change Text', self.changeText.emit)
+        menu.exec_(pos)
 
 
 class VocDialog(QDialog) :
@@ -246,13 +253,19 @@ class VocDialog(QDialog) :
         self.accepted.connect(self.saveSettings)
         self.rejected.connect(self.saveSettings)
         self.loadButton.clicked.connect(self.loadFile)
-        self.inputLine.returnPressed.connect(self.enteredText)
-        self.inputLine.ctrlN.connect(self.completeHandler)
-        self.inputLine.ctrlP.connect(lambda : self.completeHandler(False))
-        self.textList.jPressed.connect(self.itemActivated)
-        self.textList.kPressed.connect(lambda : self.itemActivated(False))
-        self.textList.tPressed.connect(self.toggleViewer)
-        self.textList.itemActivated.connect(self.itemActivated)
+
+        inputLine = self.inputLine
+        inputLine.returnPressed.connect(self.enteredText)
+        inputLine.ctrlN.connect(self.completeHandler)
+        inputLine.ctrlP.connect(lambda : self.completeHandler(False))
+
+        textList = self.textList
+        textList.jPressed.connect(self.itemActivated)
+        textList.kPressed.connect(lambda : self.itemActivated(False))
+        textList.tPressed.connect(self.toggleViewer)
+        textList.itemActivated.connect(self.itemActivated)
+        textList.changeText.connect(self.edit)
+
         self.toggleButton.clicked.connect(self.toggleViewer)
         if self.logger.isEnabledFor(DEBUG) :
             self.mediaObeject.stateChanged.connect( self.errorState )
@@ -278,6 +291,10 @@ class VocDialog(QDialog) :
         self.info('Item Activated!')
         item = self.textList.currentItem()
         row = self.textList.row(item)
+        #indexes = self.textList.selectedIndexes()
+        #print(indexes)
+        #msg = 'In the writenText, it is {}'.format(self.writenText[row])
+        #self.debug(msg)
         text = item.text()
         if not text.startswith('#') :
             self.pronounce(item.text())
@@ -336,6 +353,33 @@ class VocDialog(QDialog) :
         word = inputLine.text()
         if candidates :
             self.backAndForward(goNext)
+
+    def editDone(self) :
+        row = self.textList.currentRow()
+        item = self.textList.currentItem()
+        text = self.inputLine.text().strip().lower()
+        item.setText( text )
+        self.writenText[row] = text
+        writenText = [ ''.join([text, '\n']) for text in self.writenText ]
+        textToWrite = ''.join(writenText)
+        try :
+            with open(self.filePath, 'w') as textFile :
+                textFile.write(textToWrite)
+        except :
+            with open(self.filePath, 'w') as textFile :
+                textFile.write(''.join(writenText))
+        self.statusBar.clearMessage()
+        self.inputLine.returnPressed.connect(self.enteredText)
+        self.inputLine.returnPressed.disconnect(self.editDone)
+
+    def edit(self) :
+        textList = self.textList
+        msg = 'Now you can change the text with the input line.'
+        self.inputLine.setFocus()
+        self.play('beep.mp3')
+        self.statusBar.showMessage(msg)
+        self.inputLine.returnPressed.connect(self.editDone)
+        self.inputLine.returnPressed.disconnect(self.enteredText)
 
     def play(self, path) :
         self.mediaObeject.setCurrentSource(Phonon.MediaSource(path))
@@ -496,7 +540,9 @@ class VocDialog(QDialog) :
             writenText = writenText.splitlines()
             textList.clear()
             textList.addItems( writenText )
-            if not 'end' in writenText[-1].strip().lower() :
+            # Connect the writenText with the VocDialog.
+            self.writenText = writenText
+            if len(writenText) and not 'end' in writenText[-1].strip().lower() :
                 textList.setCurrentRow( len(writenText)-1 )
             else :
                 textList.setCurrentRow( 0 )
