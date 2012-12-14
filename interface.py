@@ -533,6 +533,8 @@ class VocDialog(QDialog) :
         textList = self.textList
         # Create or read file.
         fileName = basename(filePath)
+        windowTitle = ''.join(['VocVoc -- ', fileName])
+        self.setWindowTitle(windowTitle)
         try :
             with open(filePath, 'r+') as textFile :
                 debug('File exists, openning up.')
