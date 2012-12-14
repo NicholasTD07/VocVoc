@@ -17,7 +17,7 @@ from re import compile as reCompile
 from logging import DEBUG, getLogger
 
 # os
-from os.path import basename, join as pJoin
+from os.path import basename, dirname, join as pJoin
 
 # tempfile
 from tempfile import NamedTemporaryFile
@@ -562,7 +562,9 @@ class VocDialog(QDialog) :
             else : # No existing file but found the number in the file name.
                 debug('Dight Found. Creating file and adding first line.')
                 with open(filePath, 'x') as textFile :
-                    firstLine = ''.join( ['# list ' ,str( listNumber.group() )] ) # Cannot put '\n' here.
+                    listName = '# list' if 'list' in fileName else '# group'
+                    listNumber = str( listNumber.group() )
+                    firstLine = ' '.join( [listName, listNumber] ) # Cannot put '\n' here.
                     textFile.write( ''.join([firstLine ,'\n']) )
                 textList.clear()
                 textList.addItem(firstLine) # Otherwise there would be a new line in the list.
@@ -575,6 +577,7 @@ class VocDialog(QDialog) :
         debug = logger.debug
         debug('Preparing to load file.')
         textList = self.textList
+        self.fileDialog.setDirectory(dirname(self.filePath))
         if ( self.fileDialog.exec() ) :
             debug('Dialog executed sucessfully.')
             filePath = self.fileDialog.selectedFiles()[0]
