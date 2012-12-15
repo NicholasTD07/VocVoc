@@ -124,6 +124,17 @@ class keyEnabledListWidget(QListWidget) :
         menu.exec_(pos)
 
 
+class escDisabledTextEdit(QTextEdit) :
+
+    keyCode = { 'esc': 16777216,
+                16777216: 'esc'
+                }
+
+    def keyPressEvent(self, event) :
+        if event.key() == self.keyCode['esc'] :
+            event.ignore()
+
+
 class VocDialog(QDialog) :
 
     """This is the dialog which presents the interface and organise everything."""
@@ -131,6 +142,10 @@ class VocDialog(QDialog) :
     MAGICWORD = 'CHANGEME'
     findDight = reCompile(r'\d+')
     baseURL = 'http://www.gstatic.com/dictionary/static/sounds/de/0/CHANGEME.mp3'
+
+    keyCode = { 'esc': 16777216,
+                16777216: 'esc'
+                }
 
     def __init__(self, autoProxy=False, parent=None) :
         super(VocDialog, self).__init__(parent)
@@ -166,6 +181,23 @@ class VocDialog(QDialog) :
 
     def keyPressEvent(self, event) :
         self.debug('Key is {}.'.format(event.key()))
+        if event.key() == self.keyCode['esc'] :
+            if self.textViewer.hasFocus() :
+                self.debug('textViewer has focus.')
+                self.inputLine.setFocus()
+                self.debug('Ignore the esc key.')
+                return
+            else :
+                self.debug('textViewer does NOT have the focus.')
+                leave = QMessageBox.question(self,
+                        'Are you sure to leave?',
+                        'You are leaving?',
+                        QMessageBox.Ok, QMessageBox.Cancel)
+                self.debug(leave)
+                if leave == QMessageBox.Ok:
+                    pass
+                else :
+                    return
         super(VocDialog, self).keyPressEvent(event)
 
     def resizeEvent(self, event) :
@@ -229,7 +261,7 @@ class VocDialog(QDialog) :
             except :
                 vBox.addLayout(item)
 
-        self.textViewer = QTextEdit()
+        self.textViewer = escDisabledTextEdit()
         self.textViewer.setHidden(True)
         self.textViewer.setReadOnly(True)
 
@@ -267,8 +299,10 @@ class VocDialog(QDialog) :
         textList.changeText.connect(self.edit)
 
         self.toggleButton.clicked.connect(self.toggleViewer)
+
         if self.logger.isEnabledFor(DEBUG) :
             self.mediaObeject.stateChanged.connect( self.errorState )
+
         self.info('Signals and slots connected.')
 
     def errorState(self, state) :
@@ -317,6 +351,7 @@ class VocDialog(QDialog) :
             self.resize(700, 500)
             self.textViewer.show()
             self.textViewer.clear()
+            self.textViewer.setFocus()
             text = self.textList.currentItem().text()
             if not text.startswith('#') :
                 self.findWord(text)
